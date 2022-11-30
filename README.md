@@ -1,7 +1,7 @@
 # Production-RWKV
 
 RWKV is a Sequence to Sequence Model that takes the best features of GPT and (Recurrent Nueral Network (RNN)) that performs Language Model (LM). That is used to generate tex Auto Regressively (AR).
-It has Transformer Level Performance without the quadratic attention mechanism.
+It has Transformer Level Performance without the quadratic attention mechanism. It borrows ideas from Attention Free Transformers, meaning the attention is a linear in complexity. Allowing for infinite context windows.
 
 More from the Research and Development Repository:
 https://github.com/BlinkDL/RWKV-LM
