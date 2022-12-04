@@ -4,7 +4,7 @@ setup(
     name='PRWKV',
     version='0.0.1',    
     description='This project aims to make RWKV Accessible to everyone using a Hugging Face like OOP interface. Research done by BlinkDL.',
-    url='https://github.com/shuds13/pyexample',
+    url='https://github.com/ArEnSc/Production-RWKV',
     author='Michael Chung',
     author_email='michael.chung@databites.ca',
     license='MIT',
