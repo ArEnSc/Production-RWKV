@@ -19,11 +19,25 @@ While keeping it close to the R and D RWKV branch of code. This is a very thin l
 # API 
 
 ```python
-tokenizer = PRWKVToeknizer()
-model = RWKV4MForCausalLM("CheckpointPathLocalOrRemote")
-input_ids = tokenizer.encode("Hello World")["input_ids"]
-sequence,scores = model.generate(input_ids...) # more params in the docs
-text = tokenizer.decode(output_ids,skip_special_tokens=False)
+from rwkvtokenizer import RWKVTokenizer
+from rwkvrnnmodel import RWKVRNN4NeoForCausalLM
+
+tokenizer = RWKVTokenizer.from_file()
+model = RWKVRNN4NeoForCausalLM.from_pretrained()
+
+context = "\nIn a shocking finding, scientist discovered a herd of dragons living in a remote, previously unexplored valley, in Tibet. Even more surprising to the researchers was the fact that the dragons spoke perfect Chinese."
+context_input_ids = tokenizer.encode(context).ids
+
+
+def callback(ind):
+    index = tokenizer.decode([ind],skip_special_tokens=False)
+    print(ind)
+    # print(repr(index),end="")
+
+ctx = model.generate(inputs=context_input_ids,streaming_callback=callback,max_length=512)
+
+print(repr(tokenizer.decode(ctx,skip_special_tokens=False))) # cpu 3 tokens a second
+
 ```
 
 There are two models for RWKV
