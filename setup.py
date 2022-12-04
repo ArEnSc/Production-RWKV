@@ -15,10 +15,10 @@ setup(
                       ],
 
     classifiers=[
-        'Development Status :: 1 - Planning',
+        'Development Status :: 1 - Prototype',
         'Intended Audience :: Science/Research',
-        'License :: OSI Approved :: BSD License',  
-        'Operating System :: POSIX :: Linux',        
+        'License :: OSI Approved :: MIT License',  
+        'Operating System :: POSIX :: Linux :: OSX :: Windows',        
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
