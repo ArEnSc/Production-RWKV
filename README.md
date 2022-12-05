@@ -8,7 +8,7 @@ https://github.com/BlinkDL/RWKV-LM
 
 RWKV - Receptance Weighted Key Value 
 
-This project aims to make RWKV Accessible to everyone using a Hugging Face like OOP interface. 
+This project aims to make RWKV Accessible to everyone using a Hugging Face-esque OOP interface. 
 
 Q: So why not port it to Hugging Face? 
 A: Well as of right now RWKV goes through many changes and is involved in Research, 
