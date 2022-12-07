@@ -227,6 +227,7 @@ class RWKVRNN4NeoForCausalLM():
         Returns:
             _type_: RWKV_RNN_Model a wrapper over RWKV_RNN 
         """
+
         n_layer = None
         n_embd = None
         ctx_len = None
@@ -249,7 +250,7 @@ class RWKVRNN4NeoForCausalLM():
         elif file_path_or_name == "RWKV-4-14B":
             with open(file=Path(final_file_path) / Path("RWKV-4-14B.json")) as f:
                 json_dict = json.load(f)
-                
+
         if json_dict !=None:
             n_embd = json_dict["d_model"]
             n_layer = json_dict["num_decoder_layers"]
@@ -269,11 +270,11 @@ class RWKVRNN4NeoForCausalLM():
             
             if not file in os.listdir():
                 # download with wget
-                file = wget.download(url=url,out=cache_folder_path,bar=bar_progress)
+                file = wget.download(url=url,out=str(cache_folder_path),bar=bar_progress)
             # model file name
             # use pathlib lol
-            file = file.split('.')[0]
-            model_file_path = str(Path(cache_folder_path,file))
+            file = Path(file).name
+            model_file_path = str(Path(cache_folder_path) / Path(file))
         else:
             model_file_path = Path(file_path_or_name)
             
