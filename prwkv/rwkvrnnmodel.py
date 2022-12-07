@@ -12,7 +12,7 @@ import sys
 
 from typing import List,Union,Callable
 
-
+import torch.nn.functional as F
 torch.backends.cudnn.benchmark = True
 torch.backends.cudnn.allow_tf32 = True
 torch.backends.cuda.matmul.allow_tf32 = True
@@ -123,10 +123,10 @@ class RWKV_RNN_Model():
         # try different samplers here
         warped_logits = RWKV_RNN_Model.top_k_top_p_filtering(logits=logits,
                                                             top_k=top_k,
-                                                            top_p=top_p,
-                                                            repetition_penalty=repetition_penalty)
+                                                            top_p=top_p)
 
-        token_id = torch.multinomial(input=warped_logits)
+        probabilities = F.softmax(warped_logits, dim=-1)
+        token_id = torch.multinomial(input=probabilities,num_samples=1)
 
         return token_id
 
@@ -142,7 +142,7 @@ class RWKV_RNN_Model():
                  top_k=5,
                  repetition_penalty=2.5)->Union[List[int],None]:
 
-            assert(self.init_state != None,"Use Warm Up function to warm up the context.")
+            assert self.init_state != None,"Use Warm Up function to warm up the context."
 
             context = inputs_id
 
