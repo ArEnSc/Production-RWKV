@@ -11,6 +11,7 @@ import json
 import sys
 
 from typing import List,Union,Callable
+from .modelrun import RWKV_RNN
 
 torch.backends.cudnn.benchmark = True
 torch.backends.cudnn.allow_tf32 = True
@@ -38,8 +39,7 @@ class RWKV_RNN_Model():
         self.eos_token_id = eos_token_id
         self.padd_token_id = padd_token_id
 
-        from modelrun import RWKV_RNN
-        
+
         self.args = types.SimpleNamespace()
         self.args.RUN_DEVICE = device_type
         self.args.MODEL_NAME = file_path
@@ -272,8 +272,7 @@ class RWKVRNN4NeoForCausalLM():
                 # download with wget
                 file = wget.download(url=url,out=str(cache_folder_path),bar=bar_progress)
             # model file name
-            # use pathlib lol
-            file = Path(file).name
+            file = Path(file).stem # without chkpt
             model_file_path = str(Path(cache_folder_path) / Path(file))
         else:
             model_file_path = Path(file_path_or_name)
