@@ -191,7 +191,7 @@ class RWKVRNN4NeoForCausalLM():
                         n_layer:int=None,
                         n_embd:int=None,
                         ctx_len:int=None,
-                        cache_folder_path:Path=Path("")):
+                        cache_folder_path:Path=Path("./")):
         """
         Loads a RWKVRNN Model
         You can load in two ways

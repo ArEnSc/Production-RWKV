@@ -13,7 +13,7 @@ setup(
                       'numpy',
                       'torch'                  
                       ],
-
+    include_package_data = True,
     classifiers=[
         'Development Status :: 1 - Prototype',
         'Intended Audience :: Science/Research',
