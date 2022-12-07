@@ -1,15 +1,26 @@
 
-import wget
-import os
-from urllib.parse import urlparse
 from pathlib import Path
+import wget
+from urllib.parse import urlparse
+
+import os
 import gc
-from typing import List,Union,Callable
 import types
 import torch
+import json
+import sys
+
+from typing import List,Union,Callable
+
 torch.backends.cudnn.benchmark = True
 torch.backends.cudnn.allow_tf32 = True
 torch.backends.cuda.matmul.allow_tf32 = True
+
+def bar_progress(current, total, width=80):
+    progress_message = "Downloading: %d%% [%d / %d] bytes" % (current / total * 100, current, total)
+    # Don't use print() as it will print in new line every time.
+    sys.stdout.write("\r" + progress_message)
+    sys.stdout.flush()
 
 class RWKV_RNN_Model():
     def __init__(self,context_length:int,
@@ -47,6 +58,7 @@ class RWKV_RNN_Model():
 
         self.init_state = None
         self.init_logits = None
+
     def _warmup_with_context(self,context:List[int],save_path:Path):
         init_state = None 
         context_length = len(context)
@@ -62,68 +74,185 @@ class RWKV_RNN_Model():
         self.init_state = init_state.clone()
         self.init_logits = logits.clone()
 
+    @staticmethod
+    def top_k_top_p_filtering(logits, top_k=0, top_p=0.0, filter_value=-float('Inf')):
+
+        assert logits.dim() == 1  # batch size 1 for now - could be updated for more but the code would be less clear
+        top_k = min(top_k, logits.size(-1))  # Safety check
+
+        if top_k > 0:
+            # Remove all tokens with a probability less than the last token of the top-k
+            indices_to_remove = logits < torch.topk(logits, top_k)[0][..., -1, None]
+            logits[indices_to_remove] = filter_value
+
+        if top_p > 0.0:
+            sorted_logits, sorted_indices = torch.sort(logits, descending=True)
+            cumulative_probs = torch.cumsum(F.softmax(sorted_logits, dim=-1), dim=-1)
+
+            # Remove tokens with cumulative probability above the threshold
+            sorted_indices_to_remove = cumulative_probs > top_p
+            # Shift the indices to the right to keep also the first token above the threshold
+            sorted_indices_to_remove[..., 1:] = sorted_indices_to_remove[..., :-1].clone()
+            sorted_indices_to_remove[..., 0] = 0
+
+            indices_to_remove = sorted_indices[sorted_indices_to_remove]
+            logits[indices_to_remove] = filter_value
+
+        return logits
+
+    def _warp_logits(self,logits:torch.tensor,
+                        temperature:float,
+                        top_p:float,
+                        top_k:float,
+                        repetition_penalty:float,
+                        bad_words_ids:List[int],
+                        force_words_ids:List[int])->int:
+        """
+        Args:
+            logits (_type_): logits vector
+        Returns:
+            int: token id
+        """
+        if temperature == 0:
+            # greedy
+            token_id = torch.argmax(logits)
+            return token_id
+
+        warped_logits = logits / temperature 
+
+        # try different samplers here
+        warped_logits = RWKV_RNN_Model.top_k_top_p_filtering(logits=logits,
+                                                            top_k=top_k,
+                                                            top_p=top_p,
+                                                            repetition_penalty=repetition_penalty)
+
+        token_id = torch.multinomial(input=warped_logits)
+
+        return token_id
+
     def generate(self,
-                 inputs,
+                 inputs_id:List[int],
                  streaming_callback:Callable[[int], None], # streams single word
                  bad_words_ids=[],
                  force_words_ids=[],
                  min_length=0,
                  max_length=128,
-                 early_stopping=False,
                  temperature=1.0,
                  top_p=.9,
                  top_k=5,
-                 repetition_penalty=2.5,
-                 do_sample=False)->Union[List[int],None]: 
-                 
-            context = inputs
+                 repetition_penalty=2.5)->Union[List[int],None]:
 
-            state = None
-            for i in range(max_length):
-                if i == 0:
-                    # greedy
-                    state = self.init_state
-                    token = torch.argmax(self.init_logits)
-                else:
-                    logits, new_state = self.model.forward(context, state)
+            assert(self.init_state != None,"Use Warm Up function to warm up the context.")
 
-                    state = new_state
-                    # greedy
-                    token = torch.argmax(logits)
-                
-                context.append(token)
+            context = inputs_id
+
+            # compute the first token using the intial context
+            state = self.init_state
+            logits = self.init_logits
+
+            token_id = self._warp_logits(logits=logits,
+                                temperature=temperature,
+                                top_k=top_k,
+                                top_p=top_p,
+                                repetition_penalty=repetition_penalty,
+                                bad_words_ids=bad_words_ids,
+                                force_words_ids=force_words_ids)
+            context.append(token_id)
+
+            if streaming_callback != None:
+                    streaming_callback(token_id)
+
+            # continue computing the rest of the tokens
+            for _ in range(max_length-1): # since we already 
+                logits, new_state = self.model.forward(context, state)
+                state = new_state
+                    
+                token_id = self._warp_logits(logits=logits,
+                                    temperature=temperature,
+                                    top_k=top_k,
+                                    top_p=top_p,
+                                    repetition_penalty=repetition_penalty,
+                                    bad_words_ids=bad_words_ids,
+                                    force_words_ids=force_words_ids)
+
+                       
+                context.append(token_id)
+
                 if streaming_callback != None:
-                    streaming_callback(token)
+                    streaming_callback(token_id)
                 
             return context
 
-import sys
-def bar_progress(current, total, width=80):
-    progress_message = "Downloading: %d%% [%d / %d] bytes" % (current / total * 100, current, total)
-    # Don't use print() as it will print in new line every time.
-    sys.stdout.write("\r" + progress_message)
-    sys.stdout.flush()
 
 class RWKVRNN4NeoForCausalLM():
 
     @staticmethod
-    def from_pretrained(file_path_or_url:str="https://huggingface.co/BlinkDL/rwkv-4-pile-1b5/resolve/main/RWKV-4-Pile-1B5-20220929-ctx4096.pth",cache_folder_path:Path=Path(".")):
-        # download the model using wget from huggingface read json file lol doesn't exist yet.
-        # check for model configuration from json file in the future right now just bake it in until someone writes the json files.
+    def from_pretrained(file_path_or_name:str,
+                        n_layer:int=None,
+                        n_embd:int=None,
+                        ctx_len:int=None,
+                        cache_folder_path:Path=Path("")):
+        """
+        Loads a RWKVRNN Model
+        You can load in two ways
+        From file directly, this requires you fill in: 
+        n_layer:int
+        n_embd:int
+        ctx_len:int
+        
+        ```python
+        # example
+        model = RWKVRNN4NeoForCausalLM.from_pretrained("path_to_ckpt",n_layer=24,n_embd=784,ctx_len=1024)
+        ```
+
+        Or you can load a pretrained model from Hugging Face like so it will use the latest trained model.
+        ```python
+        
+        # where file_path_or_name 
+
+        RWKV-4-430M
+        RWKV-4-1B5
+        RWKV-4-7B
+        RWKV-4-14B
+
+        model = RWKVRNN4NeoForCausalLM.from_pretrained("RWKV-4-430M")
+        ```
+        Args:
+            file_path_or_name (str): checkpoint path WITHOUT .ckpt extension
+            n_layer (int, optional): Number of Layers
+            n_embd (int, optional): Embedding Dimension
+            ctx_len (int, optional): Context Length
+            cache_folder_path (Path, optional): This is the cache path for your pretrained downloaded model. Defaults to Path("").
+
+        Returns:
+            _type_: RWKV_RNN_Model a wrapper over RWKV_RNN 
+        """
         n_layer = None
         n_embd = None
         ctx_len = None
-        # hack for now to keep everything working
-        if file_path_or_url == "https://huggingface.co/BlinkDL/rwkv-4-pile-1b5/resolve/main/RWKV-4-Pile-1B5-20220929-ctx4096.pth":
-            n_layer = 24
-            n_embd = 2048
-            ctx_len = 4096
-        else:
-            assert(False)
+        json_dict = None 
+
+        if file_path_or_name == "RWKV-4-430M":
+            with open(file="./RWKV-4-430M.json") as f:
+                json_dict = json.load(f)
+        elif file_path_or_name == "RWKV-4-1B5":
+            with open(file="./RWKV-4-1B5.json") as f:
+                json_dict = json.load(f)
+        elif file_path_or_name == "RWKV-4-7B":
+            with open(file="./RWKV-4-7B.json") as f:
+                json_dict = json.load(f)
+        elif file_path_or_name == "RWKV-4-14B":
+            with open(file="./RWKV-4-14B.json") as f:
+                json_dict = json.load(f)
+        
+        n_embd = json_dict["d_model"]
+        n_layer = json_dict["num_decoder_layers"]
+        ctx_len = json_dict["n_positions"]
+        path = json_dict["name_or_path"]
 
         # if it is a url download
-        if urlparse(url=file_path_or_url).scheme != "":
-            url = file_path_or_url
+        if urlparse(url=path).scheme != "" and json_dict != None:
+            url = path
 
             files = os.listdir(cache_folder_path)
             # filter by ending in .pth
@@ -140,8 +269,11 @@ class RWKVRNN4NeoForCausalLM():
             file = file.split('.')[0]
             model_file_path = str(Path(cache_folder_path,file))
         else:
-            model_file_path = Path(file_path_or_url)
+            model_file_path = Path(file_path_or_name)
             
         # configure model
-        model = RWKV_RNN_Model(context_length=ctx_len,number_of_layers=n_layer,embedding_dim=n_embd,file_path=model_file_path)
+        model = RWKV_RNN_Model(context_length=ctx_len,
+                                number_of_layers=n_layer,
+                                embedding_dim=n_embd,
+                                file_path=model_file_path)
         return model
