@@ -11,7 +11,7 @@ import json
 import sys
 
 from typing import List,Union,Callable
-from .modelrun import RWKV_RNN
+
 
 torch.backends.cudnn.benchmark = True
 torch.backends.cudnn.allow_tf32 = True
@@ -39,7 +39,7 @@ class RWKV_RNN_Model():
         self.eos_token_id = eos_token_id
         self.padd_token_id = padd_token_id
 
-
+        from .modelrun import RWKV_RNN
         self.args = types.SimpleNamespace()
         self.args.RUN_DEVICE = device_type
         self.args.MODEL_NAME = file_path
