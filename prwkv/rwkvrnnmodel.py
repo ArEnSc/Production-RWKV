@@ -232,23 +232,29 @@ class RWKVRNN4NeoForCausalLM():
         ctx_len = None
         json_dict = None 
 
+        file_path = Path(__file__)
+        final_file_path = Path(file_path.parent) / Path("data")
         if file_path_or_name == "RWKV-4-430M":
-            with open(file="./RWKV-4-430M.json") as f:
+            with open(file=Path(final_file_path) / Path("RWKV-4-430M.json")) as f:
                 json_dict = json.load(f)
+
         elif file_path_or_name == "RWKV-4-1B5":
-            with open(file="./RWKV-4-1B5.json") as f:
+            with open(file=Path(final_file_path) / Path("RWKV-4-1B5.json")) as f:
                 json_dict = json.load(f)
+
         elif file_path_or_name == "RWKV-4-7B":
-            with open(file="./RWKV-4-7B.json") as f:
+            with open(file=Path(final_file_path) / Path("RWKV-4-7B.json")) as f:
                 json_dict = json.load(f)
+
         elif file_path_or_name == "RWKV-4-14B":
-            with open(file="./RWKV-4-14B.json") as f:
+            with open(file=Path(final_file_path) / Path("RWKV-4-14B.json")) as f:
                 json_dict = json.load(f)
-        
-        n_embd = json_dict["d_model"]
-        n_layer = json_dict["num_decoder_layers"]
-        ctx_len = json_dict["n_positions"]
-        path = json_dict["name_or_path"]
+                
+        if json_dict !=None:
+            n_embd = json_dict["d_model"]
+            n_layer = json_dict["num_decoder_layers"]
+            ctx_len = json_dict["n_positions"]
+            path = json_dict["name_or_path"]
 
         # if it is a url download
         if urlparse(url=path).scheme != "" and json_dict != None:
