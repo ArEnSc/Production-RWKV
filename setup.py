@@ -15,10 +15,13 @@ setup(
                       ],
     include_package_data = True,
     classifiers=[
-        'Development Status :: 1 - Prototype',
+        'Development Status :: 3 - Alpha',
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: MIT License',  
-        'Operating System :: POSIX :: Linux :: OSX :: Windows',        
-        'Programming Language :: Python :: 3.9.6',
+        'Environment :: MacOS X',
+        'Environment :: Win32 (MS Windows)',
+        'Operating System :: POSIX :: Linux',
+        'Operating System :: Microsoft :: Windows :: Windows 10',
+        'Programming Language :: Python :: 3.9'
     ],
 )
