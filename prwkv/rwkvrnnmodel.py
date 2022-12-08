@@ -53,7 +53,7 @@ class RWKV_RNN_Model():
         self.args.grad_cp = 0
         self.args.my_pos_emb = 0
         os.environ["RWKV_RUN_DEVICE"] = self.args.RUN_DEVICE
-
+        print(self.args)
         self.model = RWKV_RNN(self.args)
 
         self.init_state = None
@@ -126,6 +126,10 @@ class RWKV_RNN_Model():
                                                             top_p=top_p)
 
         probabilities = F.softmax(warped_logits, dim=-1)
+        a = probabilities > 0.0
+        indices = a.nonzero()
+        print(indices.shape)
+
         token_id = torch.multinomial(input=probabilities,num_samples=1)
 
         return token_id
@@ -137,9 +141,9 @@ class RWKV_RNN_Model():
                  force_words_ids=[],
                  min_length=0,
                  max_length=128,
-                 temperature=1.0,
+                 temperature=.85,
                  top_p=.9,
-                 top_k=5,
+                 top_k=20,
                  repetition_penalty=2.5)->Union[List[int],None]:
 
             assert self.init_state != None,"Use Warm Up function to warm up the context."
@@ -189,21 +193,21 @@ class RWKVRNN4NeoForCausalLM():
 
     @staticmethod
     def from_pretrained(file_path_or_name:str,
-                        n_layer:int=None,
-                        n_embd:int=None,
-                        ctx_len:int=None,
+                        number_of_layers:int=None,
+                        embedding_dimension:int=None,
+                        context_length:int=None,
                         cache_folder_path:Path=Path("./")):
         """
         Loads a RWKVRNN Model
         You can load in two ways
         From file directly, this requires you fill in: 
-        n_layer:int
-        n_embd:int
-        ctx_len:int
+        number_of_layers:int
+        embedding_dimension:int
+        context_length:int
         
         ```python
         # example
-        model = RWKVRNN4NeoForCausalLM.from_pretrained("path_to_ckpt",n_layer=24,n_embd=784,ctx_len=1024)
+        model = RWKVRNN4NeoForCausalLM.from_pretrained("path_to_ckpt",number_of_layers=24,embedding_dimension=784,context_length=1024)
         ```
 
         Or you can load a pretrained model from Hugging Face like so it will use the latest trained model.
@@ -220,18 +224,18 @@ class RWKVRNN4NeoForCausalLM():
         ```
         Args:
             file_path_or_name (str): checkpoint path WITHOUT .ckpt extension
-            n_layer (int, optional): Number of Layers
-            n_embd (int, optional): Embedding Dimension
-            ctx_len (int, optional): Context Length
+            number_of_layers (int, optional): Number of Layers
+            embedding_dimension (int, optional): Embedding Dimension
+            context_length (int, optional): Context Length
             cache_folder_path (Path, optional): This is the cache path for your pretrained downloaded model. Defaults to Path("").
 
         Returns:
             _type_: RWKV_RNN_Model a wrapper over RWKV_RNN 
         """
 
-        n_layer = None
-        n_embd = None
-        ctx_len = None
+        number_of_layers = number_of_layers
+        embedding_dimension = embedding_dimension
+        context_length = context_length
         json_dict = None 
 
         file_path = Path(__file__)
@@ -252,13 +256,18 @@ class RWKVRNN4NeoForCausalLM():
             with open(file=Path(final_file_path) / Path("RWKV-4-14B.json")) as f:
                 json_dict = json.load(f)
 
+        path = None
         if json_dict !=None:
-            n_embd = json_dict["d_model"]
-            n_layer = json_dict["num_decoder_layers"]
-            ctx_len = json_dict["n_positions"]
+            embedding_dimension = json_dict["d_model"]
+            number_of_layers = json_dict["num_decoder_layers"]
+            context_length = json_dict["n_positions"]
             path = json_dict["name_or_path"]
 
         # if it is a url download
+        
+        if path == None:
+            path = file_path_or_name
+
         if urlparse(url=path).scheme != "" and json_dict != None:
             url = path
 
@@ -276,11 +285,11 @@ class RWKVRNN4NeoForCausalLM():
             file = Path(file).stem # without chkpt
             model_file_path = str(Path(cache_folder_path) / Path(file))
         else:
-            model_file_path = Path(file_path_or_name)
+            model_file_path = str(Path(file_path_or_name))
             
         # configure model
-        model = RWKV_RNN_Model(context_length=ctx_len,
-                                number_of_layers=n_layer,
-                                embedding_dim=n_embd,
+        model = RWKV_RNN_Model(context_length=context_length,
+                                number_of_layers=number_of_layers,
+                                embedding_dim=embedding_dimension,
                                 file_path=model_file_path)
         return model
