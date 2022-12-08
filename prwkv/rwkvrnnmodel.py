@@ -156,8 +156,9 @@ class RWKV_RNN_Model():
                                 top_p=top_p,
                                 repetition_penalty=repetition_penalty,
                                 bad_words_ids=bad_words_ids,
-                                force_words_ids=force_words_ids)
-            context.append(token_id)
+                                force_words_ids=force_words_ids) # 1 by 1 tensor
+            
+            context.append(token_id[0]) 
 
             if streaming_callback != None:
                     streaming_callback(token_id)
@@ -176,10 +177,10 @@ class RWKV_RNN_Model():
                                     force_words_ids=force_words_ids)
 
                        
-                context.append(token_id)
+                context.append(token_id[0])
 
                 if streaming_callback != None:
-                    streaming_callback(token_id)
+                    streaming_callback(token_id[0])
                 
             return context
 
