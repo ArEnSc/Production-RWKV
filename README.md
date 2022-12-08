@@ -50,9 +50,9 @@ model = RWKVRNN4NeoForCausalLM.from_pretrained("RWKV-4-430M") # options RWKV-4-1
 
 There are two models for RWKV.
 
-* RWKV_RNN: This model is for running inference quickly. ( Availible for Inference )
+* RWKV_RNN: This model is for running inference quickly. ( Available for Inference )
 
-* RWKV (RWKV GPT): This model is for training or fine tuning your model quickly. ( Not Availible For Training Yet )
+* RWKV (RWKV GPT): This model is for training or fine tuning your model quickly. ( Not Available For Training Yet )
 
 The checkpoints for the models can be used for both models.
 
