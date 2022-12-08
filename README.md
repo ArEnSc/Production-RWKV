@@ -65,7 +65,7 @@ pip3 install PRWKV
 ```
 
 # Road Map
-* [ ] Provide Pip Package
+* [x] Provide Pip Package
 * [ ] Zero Shot Bench Mark Test
 Provide the performance numbers for the models in various deployment strategies focusing on deployment to Edge Devices iPhone and Android. 
 
