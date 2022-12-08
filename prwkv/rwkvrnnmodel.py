@@ -71,8 +71,8 @@ class RWKV_RNN_Model():
                 init_state = self.model.forward(x, init_state, preprocess_only=True)
 
         gc.collect()
-        self.init_state = init_state.clone()
-        self.init_logits = logits.clone()
+        self.init_state = init_state.detach().clone()
+        self.init_logits = logits.detach().clone()
 
     @staticmethod
     def top_k_top_p_filtering(logits, top_k=0, top_p=0.0, filter_value=-float('Inf')):
@@ -126,9 +126,9 @@ class RWKV_RNN_Model():
                                                             top_p=top_p)
 
         probabilities = F.softmax(warped_logits, dim=-1)
-        a = probabilities > 0.0
-        indices = a.nonzero()
-        print(indices.shape)
+        # a = probabilities > 0.0
+        # indices = a.nonzero()
+        # print(indices.shape)
 
         token_id = torch.multinomial(input=probabilities,num_samples=1)
 
@@ -151,7 +151,7 @@ class RWKV_RNN_Model():
             context = inputs_id
 
             # compute the first token using the intial context
-            state = self.init_state
+            state = self.init_state.detach().clone()# make a copy it's mutable :)
             logits = self.init_logits
 
             token_id = self._warp_logits(logits=logits,
