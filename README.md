@@ -13,13 +13,15 @@ https://github.com/BlinkDL/RWKV-LM
 
 This project aims to make RWKV Accessible to everyone using a familiar interface similar to Hugging Face. 
 
-* Q: So why not port it to Hugging Face?
+* Q: So why not port it to Hugging Face? 
 
 * A: Well as of right now RWKV goes through many changes and is involved in Research, 
 the Hugging Face framework is large and vast and requires a lengthy PR process that maybe ignored for long peroids of time.
 This project aims to port the latest developments in the RWKV make them super accessible with few lines of code.
 While keeping it close to the R and D RWKV branch of code. 
 This is a very thin layer over the core features of RWKV.
+
+Update: I am working on the HF version.
 
 # API 
 
