@@ -11,7 +11,7 @@ import json
 import sys
 
 from typing import List,Union,Callable
-
+from .modelrun import RWKV_RNN
 import torch.nn.functional as F
 torch.backends.cudnn.benchmark = True
 torch.backends.cudnn.allow_tf32 = True
@@ -39,7 +39,7 @@ class RWKV_RNN_Model():
         self.eos_token_id = eos_token_id
         self.padd_token_id = padd_token_id
 
-        from .modelrun import RWKV_RNN
+
         self.args = types.SimpleNamespace()
         self.args.RUN_DEVICE = device_type
         self.args.MODEL_NAME = file_path
@@ -59,7 +59,22 @@ class RWKV_RNN_Model():
         self.init_state = None
         self.init_logits = None
 
-    def _warmup_with_context(self,context:List[int],save_path:Path):
+    def half(self):
+        import platform
+        if platform.system() == "Darwin":
+            assert False, "Not Supported"
+        elif platform.system() == "Windows":
+            self.args.FLOAT_MODE = "bf16"
+            self.model = RWKV_RNN(self.args)
+        else:
+            self.args.FLOAT_MODE = "bf16"
+            self.model = RWKV_RNN(self.args)
+
+    def clear_memory(self):
+        self.init_state = None
+        self.init_logits = None 
+        
+    def warmup_with_context(self,context:List[int],save_path:Path):
         init_state = None 
         context_length = len(context)
 
