@@ -87,6 +87,12 @@ This allows you to transition between both a GPT like model and a RNN like model
 
 * Another special note about RWKV-LM is that you can use RWKV GPT as an context encoder to generate the context for the decoder very simular to cross attention mechanism with Encoder Decoder Architectures. This will be implemented at a future date. As it requires in memory weight sharing.
 
+Performance:
+| CPU M1 Pro | RWKV-430m fp32 | RWKV-1B5 fp32 | RWKV-7B | RWKV-14B |
+|--          |--         |--        |--       |--        |
+|Tokens/Second| 17-18 Tokens | 4-5 Tokens   | NA     |  NA      |   NA       |
+|Memory RAM   |    ~1.3-2GB | ~5.6-5.8 GB        | NA     |    NA    |
+
 # Road Map
 * [x] Provide Pip Package
 * [ ] Zero Shot Bench Mark Test
