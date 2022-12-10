@@ -48,21 +48,42 @@ tokenizer = RWKVTokenizer.default()
 model = RWKVRNN4NeoForCausalLM.from_pretrained("RWKV-4-430M") # options RWKV-4-1B5  RWKV-4-7B  RWKV-4-14B
 ```
 
-There are two models for RWKV.
-
-* RWKV_RNN: This model is for running inference quickly. ( Availible for Inference )
-
-* RWKV (RWKV GPT): This model is for training or fine tuning your model quickly. ( Not Availible For Training Yet )
-
-The checkpoints for the models can be used for both models.
-
-* Another special note about RWKV-LM is that you can use RWKV GPT as an context encoder to generate the context for the decoder very simular to cross attention mechanism with Encoder Decoder Architectures. This will be implemented at a future date. As it requires weight sharing.
-
 # How to install
 
 ```
 pip3 install PRWKV
 ```
+
+# Quickly Grokking the RWKV Model
+So when I first read about this model on less wrong[https://www.lesswrong.com/posts/K4urTDkBbtNuLivJx/why-i-think-strong-general-ai-is-coming-soon] Then spent quite a bit of time digging. The important information seemed to be scattered around the discord and locked up behind the mind of a genius, so this is an attempt to simplify and clearify and surface the ideas and model and how it works.
+
+There are two models for RWKV, they are refered to as modes, specifically in RWKVv4[https://github.com/BlinkDL/RWKV-LM/tree/main/RWKV-v4neo] Folder
+
+This was due discovery in an algebraic formulation for the RWKV_RNN model that allows it to reformulated as a GPT model (RWKV GPT) with a Self Attention. 
+
+* What makes this `very specical` is that weights can be shared and loaded between the two models, allowing an interop between both GPT mode nad RNN Mode. This implies you can use both models at the same time because you can share the weights in memory. More on this idea later, as we need to get into the specfics properties of each model mode.
+
+* RWKV_RNN: 
+** This model is designed for running inference quickly. ( Availible for Inference in this Package )
+** It has a hidden state that stays a constant size. This hidden state encodes and compresses `the prompt context` and subsequent additions to the prompt context. This means that we really don't need to keep the `prompt context and the history of that in memory like that of a vanilla transformer` because it is encoded in the hidden state. This feature has limitations however... and entirely depends on the context length of the training samples when training using RWKV GPT. Also depends on the floating point accuracy.
+** Blink DL mentioned that when training with GPT Mode with a context length of 1024, he noticed that KVRW_RNN deteriorated around a context length of 2000 so it can extrapolate and compress the `the prompt context` a bit further. This is due to the fact that model likely doesn't know how to handle samples beyond that size. This implies that the hidden state allows for the `the prompt context` to be infinite, if we can fine tune it properly. 
+( Unclear right how ) 
+
+BlinkDL Mentioned 
+```
+If you train RWKV using the correct method (GPT mode with ctxlen 1024 but apply smart "continuation" of hidden state) to let it learn longer ctxlen, the RNN mode can easily support ctxlen of at least 100k. 
+```
+
+* RWKV (RWKV GPT): This mode is for training or fine tuning your model quickly. ( Not Availible For Training Yet In this Repo )
+** This mode is designed for training and generating the initial hidden state quickly when in memory weight sharing.
+** The limitation of this mode is that it doesn't contain a hidden state that can't hold an infinite context length.
+** The pros of this mode is that it can utilize parallelism to quickly train because it is in it's GPT configuration.
+** Another pro of this mode is that it contains a linear self attention mechnism allowing for large context lengths.
+
+The checkpoints for the models can be used for both models.
+This allows you to transition between both a GPT like model and a RNN like model. Almost like a shape shifting model.
+
+* Another special note about RWKV-LM is that you can use RWKV GPT as an context encoder to generate the context for the decoder very simular to cross attention mechanism with Encoder Decoder Architectures. This will be implemented at a future date. As it requires in memory weight sharing.
 
 # Road Map
 * [x] Provide Pip Package
