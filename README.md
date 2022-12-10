@@ -90,8 +90,8 @@ This allows you to transition between both a GPT like model and a RNN like model
 Performance:
 | CPU M1 Pro | RWKV-430m fp32 | RWKV-1B5 fp32 | RWKV-7B | RWKV-14B |
 |--          |--         |--        |--       |--        |
-|tokens/second| 17 tokens |     5 tokens   |      |        |   NA       | NA
-|memory RAM  |     ~1-2GB      |   5GB        | NA         |    NA     |
+|Tokens/Second| 17-18 Tokens | 4-5 Tokens   | NA     |  NA      |   NA       |
+|Memory RAM   |    ~1.3-2GB | ~5.6-5.8 GB        | NA     |    NA    |
 
 # Road Map
 * [x] Provide Pip Package
