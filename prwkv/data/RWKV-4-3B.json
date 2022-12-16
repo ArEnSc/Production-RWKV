@@ -1,0 +1,10 @@
+{
+    "name_or_path": "https://huggingface.co/BlinkDL/rwkv-4-pile-3b/resolve/main/RWKV-4-Pile-3B-20221110-ctx4096.pth",
+    "eos_token_id":0,
+    "pad_token_id":1, 
+    "d_model":2560, 
+    "is_encoder_decoder":false, 
+    "num_decoder_layers":32,
+    "vocab_size": 50277,
+    "n_positions":4096
+}
