@@ -88,10 +88,18 @@ This allows you to transition between both a GPT like model and a RNN like model
 * Another special note about RWKV-LM is that you can use RWKV GPT as an context encoder to generate the context for the decoder very similar to the cross attention mechanism with Encoder Decoder Architectures. This will be implemented at a future date. As it requires in memory weight sharing.
 
 Performance:
-| CPU M1 Pro | RWKV-430m fp32 | RWKV-1B5 fp32 | RWKV-7B | RWKV-14B |
-|--          |--         |--        |--       |--        |
-|Tokens/Second| 17-18 Tokens | 4-5 Tokens   | NA     |  NA      |   NA       |
-|Memory RAM   |    ~1.3-2GB | ~5.6-5.8 GB        | NA     |    NA    |
+| CPU M1 Pro | RWKV-430m fp32 | RWKV-1B5 fp32 | RWKV-3B | RWKV-7B | RWKV-14B |
+|--           |--             |--              |--       |--       |--       |
+|Tokens/Second| 17-18 Tokens | 4-5 Tokens | NA | NA     | NA      | NA        |
+|Memory RAM   |    ~1.3-2GB | ~5.6-5.8 GB | NA | NA     | NA      | NA        |
+
+Performance 3090:
+| GPU 3090 24GB  | RWKV-170m (RWKV-4a-Pile-170M-20221209-7955) fp16 | RWKV-430m (RWKV-4-Pile-430M-20220808-8066) fp16 | RWKV-1B5 (RWKV-4-Pile-1B5-20220929-ctx4096) fp16 | RWKV-3B (RWKV-4-Pile-3B-20221110-ctx4096) fp16 | RWKV-7B (RWKV-4-Pile-7B-20221123-ctx2048) fp16 | RWKV-14B fp16 |
+|--              |--                                                |--              |--              |--           |--            |--             |
+| 25 Tokens | 0.6221s |  0.9178s | 0.8562s |  1.0058s | 1.0309s | x |
+| Memory VRAM  | 900MB |  1.5GB | 3.5GB | 6GB | 14GB | x |
+| Warm Up Time | 0.7686s | 0.9178s |  0.8562s |  1.0058s | 1.0309s | x |
+| Load Time |  1.9397s | 3.0567s |  6.3156s |  14.0923s | 26.1861s | x | 
 
 # Road Map
 * [x] Provide Pip Package
