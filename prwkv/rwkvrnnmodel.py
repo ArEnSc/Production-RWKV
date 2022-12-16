@@ -59,15 +59,15 @@ class RWKV_RNN_Model():
         self.init_state = None
         self.init_logits = None
 
-    def half(self):
+    def half(self,mode="fp16"):
         import platform
         if platform.system() == "Darwin":
             assert False, "Not Supported"
         elif platform.system() == "Windows":
-            self.args.FLOAT_MODE = "bf16"
+            self.args.FLOAT_MODE = mode
             self.model = RWKV_RNN(self.args)
         else:
-            self.args.FLOAT_MODE = "bf16"
+            self.args.FLOAT_MODE = mode
             self.model = RWKV_RNN(self.args)
 
     def clear_memory(self):
