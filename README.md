@@ -93,7 +93,7 @@ Performance:
 |Tokens/Second| 17-18 Tokens | 4-5 Tokens | NA | NA     | NA      | NA        |
 |Memory RAM   |    ~1.3-2GB | ~5.6-5.8 GB | NA | NA     | NA      | NA        |
 
-Performance 3090:
+Performance 3090 (Non Cuda Might need to revisit these metrics):
 | GPU 3090 24GB  | RWKV-170m (RWKV-4a-Pile-170M-20221209-7955) fp16 | RWKV-430m (RWKV-4-Pile-430M-20220808-8066) fp16 | RWKV-1B5 (RWKV-4-Pile-1B5-20220929-ctx4096) fp16 | RWKV-3B (RWKV-4-Pile-3B-20221110-ctx4096) fp16 | RWKV-7B (RWKV-4-Pile-7B-20221123-ctx2048) fp16 | RWKV-14B fp16 |
 |--              |--                                                |--              |--              |--           |--            |--             |
 | 25 Tokens | 0.6221s |  0.9178s | 0.8562s |  1.0058s | 1.0309s | x |
