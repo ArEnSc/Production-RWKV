@@ -232,6 +232,7 @@ class RWKVRNN4NeoForCausalLM():
 
         RWKV-4-430M
         RWKV-4-1B5
+        RWKV-4-3B
         RWKV-4-7B
         RWKV-4-14B
 
@@ -255,18 +256,19 @@ class RWKVRNN4NeoForCausalLM():
 
         file_path = Path(__file__)
         final_file_path = Path(file_path.parent) / Path("data")
+        
         if file_path_or_name == "RWKV-4-430M":
             with open(file=Path(final_file_path) / Path("RWKV-4-430M.json")) as f:
                 json_dict = json.load(f)
-
         elif file_path_or_name == "RWKV-4-1B5":
             with open(file=Path(final_file_path) / Path("RWKV-4-1B5.json")) as f:
                 json_dict = json.load(f)
-
+        elif file_path_or_name == "RWKV-4-3B":
+            with open(file=Path(final_file_path) / Path("RWKV-4-3B.json")) as f:
+                json_dict = json.load(f)
         elif file_path_or_name == "RWKV-4-7B":
             with open(file=Path(final_file_path) / Path("RWKV-4-7B.json")) as f:
                 json_dict = json.load(f)
-
         elif file_path_or_name == "RWKV-4-14B":
             with open(file=Path(final_file_path) / Path("RWKV-4-14B.json")) as f:
                 json_dict = json.load(f)
