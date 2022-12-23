@@ -70,6 +70,14 @@ class RWKV_RNN_Model():
             self.args.FLOAT_MODE = mode
             self.model = RWKV_RNN(self.args)
 
+    def cuda(self):
+        self.args.RUN_DEVICE = "cuda"
+        self.model = RWKV_RNN(self.args)
+
+    def cpu(self):
+        self.args.RUN_DEVICE = "cpu"
+        self.model = RWKV_RNN(self.args)
+
     def clear_memory(self):
         self.init_state = None
         self.init_logits = None 
@@ -159,10 +167,11 @@ class RWKV_RNN_Model():
                  temperature=.85,
                  top_p=.9,
                  top_k=20,
+                 stop_on_eos=False,
                  repetition_penalty=2.5)->Union[List[int],None]:
 
             assert self.init_state != None,"Use Warm Up function to warm up the context."
-
+            
             context = inputs_id
 
             # compute the first token using the intial context
@@ -177,14 +186,15 @@ class RWKV_RNN_Model():
                                 bad_words_ids=bad_words_ids,
                                 force_words_ids=force_words_ids) # 1 by 1 tensor
             
-            context.append(token_id[0]) 
+            context = token_id[0]
 
             if streaming_callback != None:
                     streaming_callback(token_id)
 
             # continue computing the rest of the tokens
+            next_token = token_id[0]
             for _ in range(max_length-1): # since we already 
-                logits, new_state = self.model.forward(context, state)
+                logits, new_state = self.model.forward(next_token, state)
                 state = new_state
                     
                 token_id = self._warp_logits(logits=logits,
@@ -194,13 +204,17 @@ class RWKV_RNN_Model():
                                     repetition_penalty=repetition_penalty,
                                     bad_words_ids=bad_words_ids,
                                     force_words_ids=force_words_ids)
-
-                       
+                
                 context.append(token_id[0])
-
+                
                 if streaming_callback != None:
                     streaming_callback(token_id[0])
+
+                if token_id == self.eos_token_id and stop_on_eos:
+                    break
                 
+                next_token = token_id[0]
+
             return context
 
 
@@ -230,6 +244,7 @@ class RWKVRNN4NeoForCausalLM():
         
         # where file_path_or_name 
 
+        RWKV-4-169M
         RWKV-4-430M
         RWKV-4-1B5
         RWKV-4-3B
@@ -256,7 +271,9 @@ class RWKVRNN4NeoForCausalLM():
 
         file_path = Path(__file__)
         final_file_path = Path(file_path.parent) / Path("data")
-        
+        if file_path_or_name == "RWKV-4-169M":
+            with open(file=Path(final_file_path) / Path("RWKV-4-169M.json")) as f:
+                json_dict = json.load(f)
         if file_path_or_name == "RWKV-4-430M":
             with open(file=Path(final_file_path) / Path("RWKV-4-430M.json")) as f:
                 json_dict = json.load(f)
