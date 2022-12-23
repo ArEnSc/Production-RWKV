@@ -186,13 +186,13 @@ class RWKV_RNN_Model():
                                 bad_words_ids=bad_words_ids,
                                 force_words_ids=force_words_ids) # 1 by 1 tensor
             
-            context = token_id[0]
+            context.append(token_id[0])
 
             if streaming_callback != None:
                     streaming_callback(token_id)
 
             # continue computing the rest of the tokens
-            next_token = token_id[0]
+            next_token = token_id
             for _ in range(max_length-1): # since we already 
                 logits, new_state = self.model.forward(next_token, state)
                 state = new_state
@@ -212,8 +212,8 @@ class RWKV_RNN_Model():
 
                 if token_id == self.eos_token_id and stop_on_eos:
                     break
-                
-                next_token = token_id[0]
+
+                next_token = token_id
 
             return context
 
