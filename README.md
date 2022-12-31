@@ -63,12 +63,12 @@ There are two models for RWKV, they are refered to as modes, specifically in RWK
 
 This was due discovery in an algebraic formulation for the RWKV_RNN model that allows it to be reformulated as a GPT model (RWKV GPT) with a Self Attention. 
 
-* What makes this `very special` is that weights can be shared and loaded between the two models, allowing an interop between both GPT mode nad RNN Mode. This implies you can use both models at the same time because you can share the weights in memory. More on this idea later, as we need to get into the specifics properties of each model mode.
+* What makes this `very special` is that weights can be shared and loaded between the two models, allowing an interop between both GPT mode and RNN Mode. This implies you can use both models at the same time because you can share the weights in memory. More on this idea later, as we need to get into the specifics properties of each model mode.
 
 * RWKV_RNN: 
-** This model is designed for running inference quickly. ( Available for Inference in this Package )
-** It has a hidden state that stays a constant size. This hidden state encodes and compresses `the prompt context` and subsequent additions to the prompt context. This means that we really don't need to keep the `prompt context and the history of that in memory like that of a vanilla transformer` because it is encoded in the hidden state. This feature has limitations however... and entirely depends on the context length of the training samples when training using RWKV GPT. Also depends on the floating point accuracy.
-** Blink DL mentioned that when training with GPT Mode with a context length of 1024, he noticed that KVRW_RNN deteriorated around a context length of 2000 so it can extrapolate and compress the `the prompt context` a bit further. This is due to the fact that the model likely doesn't know how to handle samples beyond that size. This implies that the hidden state allows for the `the prompt context` to be infinite, if we can fine tune it properly. 
+  * This model is designed for running inference quickly. ( Available for Inference in this Package )
+  * It has a hidden state that stays a constant size. This hidden state encodes and compresses `the prompt context` and subsequent additions to the prompt context. This means that we really don't need to keep the `prompt context and the history of that in memory like that of a vanilla transformer` because it is encoded in the hidden state. This feature has limitations however... and entirely depends on the context length of the training samples when training using RWKV GPT. Also depends on the floating point accuracy.
+  * Blink DL mentioned that when training with GPT Mode with a context length of 1024, he noticed that RWKV_RNN deteriorated around a context length of 2000 so it can extrapolate and compress the `the prompt context` a bit further. This is due to the fact that the model likely doesn't know how to handle samples beyond that size. This implies that the hidden state allows for the `the prompt context` to be infinite, if we can fine tune it properly. 
 ( Unclear right how ) 
 
 BlinkDL Mentioned 
@@ -77,10 +77,11 @@ If you train RWKV using the correct method (GPT mode with ctxlen 1024 but apply 
 ```
 
 * RWKV (RWKV GPT): This mode is for training or fine tuning your model quickly. ( Not Available For Training Yet In this Repo )
-** This mode is designed for training and generating the initial hidden state quickly when in memory weight sharing.
-** The limitation of this mode is that it doesn't contain a hidden state that can't hold an infinite context length.
-** The pros of this mode is that it can utilize parallelism to quickly train because it is in it's GPT configuration.
-** Another pro of this mode is that it contains a linear self attention mechanism allowing for large context lengths.
+  * This mode is designed for training and generating the initial hidden state quickly when in memory weight sharing.
+  * The limitation of this mode is that it doesn't contain a hidden state that can't hold an infinite context length.
+  * The pros of this mode is that it can utilize parallelism to quickly train because it is in it's GPT configuration.
+  * Another pro of this mode is that it contains a linear self attention mechanism allowing for large context lengths.
+  * Wierdly RWKV can be trained as an RNN as well ( mentioned in a discord discussion but not implemented )
 
 The checkpoints for the models can be used for both models.
 This allows you to transition between both a GPT like model and a RNN like model. Almost like a shape shifting model.
