@@ -208,18 +208,17 @@ class RWKV_RNN_Model():
                 for i in range(len(context)):
                     next_token = context[i:i+1]
                     _, new_state = self.model.forward(next_token, state)
-                    print(next_token)
+                 
                     if i == len(context)-1: # last token
                         # get next token from context
                         out_logits, new_state = self.model.forward(next_token, state)
                         logits = out_logits
-                        print("Logits")
-                        print(logits)
+                       
                     if streaming_callback != None:
-                        streaming_callback(next_token)
+                        streaming_callback(next_token[0])
 
                 # compute the next token given the last token from the context
-                print(logits)
+               
                 token_id = self._warp_logits(logits=logits,
                                         temperature=temperature,
                                         top_k=top_k,
@@ -227,7 +226,7 @@ class RWKV_RNN_Model():
                                         repetition_penalty=repetition_penalty,
                                         bad_words_ids=bad_words_ids,
                                         force_words_ids=force_words_ids)
-                print(token_id.shape)
+                
                 next_token = token_id
 
             # Generate using the prior context warm up
