@@ -200,7 +200,7 @@ class RWKV_RNN_Model():
             state = None
             if self.init_state != None:
                 state = self.init_state.detach().clone()
-
+                print("State is not none!")
             logits = None
             next_token = None
 
