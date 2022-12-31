@@ -35,7 +35,7 @@ class RWKV_RNN(nn.Module):
         self.RUN_DEVICE = args.RUN_DEVICE
 
         with torch.no_grad():
-            w = torch.load(args.MODEL_NAME + '.pth', map_location='cpu')
+            w = torch.load(args.MODEL_NAME + '.pth', map_location=args.RUN_DEVICE)
             # refine weights and send to correct device
             keys = list(w.keys())
             if 'pos_emb_x' in keys:

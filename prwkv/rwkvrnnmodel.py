@@ -58,6 +58,7 @@ class RWKV_RNN_Model():
 
         self.init_state = None
         self.init_logits = None
+        self.warmup_context = None
 
     def half(self,mode="fp16"):
         import platform
@@ -84,10 +85,11 @@ class RWKV_RNN_Model():
         
     def warmup_with_context(self,context:List[int],save_path:Path):
         init_state = None 
+        self.warmup_context = context
         context_length = len(context)
 
         for i in range(context_length):
-            x = context[: i + 1]
+            x = context[i:i+1]
             if i == context_length - 1:
                 logits, init_state = self.model.forward(x, init_state)
             else:
@@ -129,7 +131,7 @@ class RWKV_RNN_Model():
                         top_k:float,
                         repetition_penalty:float,
                         bad_words_ids:List[int],
-                        force_words_ids:List[int])->int:
+                        force_words_ids:List[int])->List[int]:
         """
         Args:
             logits (_type_): logits vector
@@ -156,10 +158,10 @@ class RWKV_RNN_Model():
         token_id = torch.multinomial(input=probabilities,num_samples=1)
 
         return token_id
-
+    
     def generate(self,
-                 inputs_id:List[int],
                  streaming_callback:Callable[[int], None], # streams single word
+                 inputs_id:List[int]=[],
                  bad_words_ids=[],
                  force_words_ids=[],
                  min_length=0,
@@ -170,31 +172,56 @@ class RWKV_RNN_Model():
                  stop_on_eos=False,
                  repetition_penalty=2.5)->Union[List[int],None]:
 
-            assert self.init_state != None,"Use Warm Up function to warm up the context."
-            
             context = inputs_id
 
+            # update state and ignore logits and continue generating from the last set of logits
             # compute the first token using the intial context
-            state = self.init_state.detach().clone()# make a copy it's mutable :)
-            logits = self.init_logits
+            state = None
+            if self.init_state != None:
+                state = self.init_state.detach().clone()
 
-            token_id = self._warp_logits(logits=logits,
-                                temperature=temperature,
-                                top_k=top_k,
-                                top_p=top_p,
-                                repetition_penalty=repetition_penalty,
-                                bad_words_ids=bad_words_ids,
-                                force_words_ids=force_words_ids) # 1 by 1 tensor
-            
-            context.append(token_id[0])
+            logits = None
+            next_token = None
 
-            if streaming_callback != None:
-                    streaming_callback(token_id)
+            if len(context) > 0:
+                for i in range(len(context)):
+                    next_token = context[i:i+1]
+                    _, new_state = self.model.forward(next_token, state)
+                    print(next_token)
+                    if i == len(context)-1: # last token
+                        # get next token from context
+                        out_logits, new_state = self.model.forward(next_token, state)
+                        logits = out_logits
+                        print("Logits")
+                        print(logits)
+                    if streaming_callback != None:
+                        streaming_callback(next_token)
 
-            # continue computing the rest of the tokens
-            next_token = token_id
-            for _ in range(max_length-1): # since we already 
+                # compute the next token given the last token from the context
+                print(logits)
+                token_id = self._warp_logits(logits=logits,
+                                        temperature=temperature,
+                                        top_k=top_k,
+                                        top_p=top_p,
+                                        repetition_penalty=repetition_penalty,
+                                        bad_words_ids=bad_words_ids,
+                                        force_words_ids=force_words_ids)
+                print(token_id.shape)
+                next_token = token_id
+
+            # Generate using the prior context warm up
+            else:
+                next_token = self._warp_logits(logits=self.init_logits,
+                                                temperature=temperature,
+                                                top_k=top_k,
+                                                top_p=top_p,
+                                                repetition_penalty=repetition_penalty,
+                                                bad_words_ids=bad_words_ids,
+                                                force_words_ids=force_words_ids)
+
+            for _ in range(max_length):
                 logits, new_state = self.model.forward(next_token, state)
+
                 state = new_state
                     
                 token_id = self._warp_logits(logits=logits,
@@ -203,9 +230,9 @@ class RWKV_RNN_Model():
                                     top_p=top_p,
                                     repetition_penalty=repetition_penalty,
                                     bad_words_ids=bad_words_ids,
-                                    force_words_ids=force_words_ids)
+                                    force_words_ids=force_words_ids) # 1 by 1
                 
-                context.append(token_id[0])
+                context.append(token_id[0]) 
                 
                 if streaming_callback != None:
                     streaming_callback(token_id[0])
@@ -214,6 +241,9 @@ class RWKV_RNN_Model():
                     break
 
                 next_token = token_id
+                
+            if self.warmup_context != None:
+                return self.warmup_context + context
 
             return context
 
@@ -289,7 +319,7 @@ class RWKVRNN4NeoForCausalLM():
         elif file_path_or_name == "RWKV-4-14B":
             with open(file=Path(final_file_path) / Path("RWKV-4-14B.json")) as f:
                 json_dict = json.load(f)
-
+        
         path = None
         if json_dict !=None:
             embedding_dimension = json_dict["d_model"]
