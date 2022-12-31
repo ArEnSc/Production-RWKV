@@ -83,8 +83,8 @@ class RWKV_RNN_Model():
         self.init_state = None
         self.init_logits = None 
         
-    def warmup_with_context(self,context:List[int]):
-        init_state = None 
+    def warmup_with_context(self,context:List[int],clear=True):
+        init_state = None if clear else self.init_state
         self.warmup_context = context
         context_length = len(context)
 
@@ -191,7 +191,8 @@ class RWKV_RNN_Model():
                  top_p=.9,
                  top_k=20,
                  stop_on_eos=False,
-                 repetition_penalty=2.5)->Union[List[int],None]:
+                 repetition_penalty=2.5,
+                 update_state=False)->Union[List[int],None]:
 
             context = inputs_id
 
@@ -207,7 +208,7 @@ class RWKV_RNN_Model():
             if len(context) > 0:
                 for i in range(len(context)):
                     next_token = context[i:i+1]
-                    _, new_state = self.model.forward(next_token, state)
+                    new_state = self.model.forward(next_token, state, preprocess_only=True)
                  
                     if i == len(context)-1: # last token
                         # get next token from context
@@ -216,6 +217,8 @@ class RWKV_RNN_Model():
                        
                     if streaming_callback != None:
                         streaming_callback(next_token[0])
+                        
+                    state = new_state
 
                 # compute the next token given the last token from the context
                
@@ -261,6 +264,10 @@ class RWKV_RNN_Model():
                     break
 
                 next_token = token_id
+                
+            if update_state:
+                self.init_state = state
+                self.init_logits = logits
                 
             if self.warmup_context != None:
                 return self.warmup_context + context
