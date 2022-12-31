@@ -200,14 +200,13 @@ class RWKV_RNN_Model():
             state = None
             if self.init_state != None:
                 state = self.init_state.detach().clone()
-                print("State is not none!")
             logits = None
             next_token = None
 
             if len(context) > 0:
                 for i in range(len(context)):
                     next_token = context[i:i+1]
-                    _, new_state = self.model.forward(next_token, state)
+                    new_state = self.model.forward(next_token, state,preprocess_only=True)
                  
                     if i == len(context)-1: # last token
                         # get next token from context
@@ -217,6 +216,7 @@ class RWKV_RNN_Model():
                     if streaming_callback != None:
                         streaming_callback(next_token[0])
 
+                    state = new_state 
                 # compute the next token given the last token from the context
                
                 token_id = self._warp_logits(logits=logits,
