@@ -83,7 +83,7 @@ class RWKV_RNN_Model():
         self.init_state = None
         self.init_logits = None 
         
-    def warmup_with_context(self,context:List[int],save_path:Path):
+    def warmup_with_context(self,context:List[int]):
         init_state = None 
         self.warmup_context = context
         context_length = len(context)
@@ -98,6 +98,27 @@ class RWKV_RNN_Model():
         gc.collect()
         self.init_state = init_state.detach().clone()
         self.init_logits = logits.detach().clone()
+
+    def save_context(self,save_path_and_name:Path,context_decoded:str=""):
+        if save_path_and_name !=None:
+
+            state = self.init_state.detach().clone()
+            logits = self.init_logits.detach().clone()
+
+            # Create a dictionary with the meta data
+            meta = {
+                'context_decoded':context_decoded
+            }
+
+            data = {'state': state, 'logits': logits}
+            torch.save((data, meta), f'{save_path_and_name}.pt')
+
+    def load_context(self,load_path:Path):
+        loaded_tensors, loaded_metas = torch.load(f'{load_path}.pt')
+        self.init_state = loaded_tensors["state"]
+        self.init_logits = loaded_tensors["logits"]
+        return loaded_metas["context_decoded"]
+        
 
     @staticmethod
     def top_k_top_p_filtering(logits, top_k=0, top_p=0.0, filter_value=-float('Inf')):
