@@ -53,9 +53,9 @@ class RWKV_RNN_Model():
         self.args.grad_cp = 0
         self.args.my_pos_emb = 0
         os.environ["RWKV_RUN_DEVICE"] = self.args.RUN_DEVICE
-        print(self.args)
+        
         self.model = RWKV_RNN(self.args)
-
+        
         self.init_state = None
         self.init_logits = None
         self.warmup_context = None
@@ -73,10 +73,12 @@ class RWKV_RNN_Model():
 
     def cuda(self):
         self.args.RUN_DEVICE = "cuda"
+        os.environ["RWKV_RUN_DEVICE"] = self.args.RUN_DEVICE
         self.model = RWKV_RNN(self.args)
 
     def cpu(self):
         self.args.RUN_DEVICE = "cpu"
+        os.environ["RWKV_RUN_DEVICE"] = self.args.RUN_DEVICE
         self.model = RWKV_RNN(self.args)
 
     def clear_memory(self):
