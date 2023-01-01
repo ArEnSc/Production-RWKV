@@ -60,6 +60,8 @@ class RWKV_RNN_Model():
         self.init_logits = None
         self.warmup_context = None
 
+        self.should_update = False 
+
     def half(self,mode="fp16"):
         import platform
         if platform.system() == "Darwin":
@@ -121,6 +123,8 @@ class RWKV_RNN_Model():
         self.init_logits = loaded_tensors["logits"]
         return loaded_metas["context_decoded"]
         
+    def update_state_after_generation(self,flag:bool):
+        self.should_update = flag
 
     @staticmethod
     def top_k_top_p_filtering(logits, top_k=0, top_p=0.0, filter_value=-float('Inf')):
@@ -263,11 +267,17 @@ class RWKV_RNN_Model():
                     break
 
                 next_token = token_id
-                
-            if self.warmup_context != None:
+            # after each generation keep the previous context state 
+            if self.should_update:
+                self.init_logits = logits.detach().copy()
+                self.init_state =  state.detach().copy()
+                self.warmup_context = self.warmup_context + context
+                return self.warmup_context
+            # if not storing previous state and context was warmed up
+            elif self.warmup_context != None:
                 return self.warmup_context + context
-
-            return context
+            else: # return the context if didn't have any warmup state
+                return context
 
 
 class RWKVRNN4NeoForCausalLM():
