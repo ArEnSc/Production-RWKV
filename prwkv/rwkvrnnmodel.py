@@ -30,7 +30,7 @@ class RWKV_RNN_Model():
                 file_path:Path,
                 eos_token_id:int = 0,
                 padd_token_id:int = 1,
-                device_type:str="cpu", # cpu or cuda
+                device_type:str = None, # cpu or cuda
                 ):
         
         self.context_length = context_length
@@ -41,7 +41,7 @@ class RWKV_RNN_Model():
 
 
         self.args = types.SimpleNamespace()
-        self.args.RUN_DEVICE = device_type
+        self.args.RUN_DEVICE = device_type or os.environ.get('RWKV_RUN_DEVICE', 'cpu')
         self.args.MODEL_NAME = file_path
 
         self.args.FLOAT_MODE = "fp32" # fp32 (good for cpu) // fp16 (might overflow) // bf16 (less accurate)
@@ -52,7 +52,6 @@ class RWKV_RNN_Model():
         self.args.pre_ffn = 0
         self.args.grad_cp = 0
         self.args.my_pos_emb = 0
-        os.environ["RWKV_RUN_DEVICE"] = self.args.RUN_DEVICE
         print(self.args)
         self.model = RWKV_RNN(self.args)
 
@@ -275,7 +274,8 @@ class RWKVRNN4NeoForCausalLM():
                         number_of_layers:int=None,
                         embedding_dimension:int=None,
                         context_length:int=None,
-                        cache_folder_path:Path=Path("./")):
+                        cache_folder_path:Path=Path("./"),
+                        device_type=None):
         """
         Loads a RWKVRNN Model
         You can load in two ways
@@ -375,5 +375,6 @@ class RWKVRNN4NeoForCausalLM():
         model = RWKV_RNN_Model(context_length=context_length,
                                 number_of_layers=number_of_layers,
                                 embedding_dim=embedding_dimension,
-                                file_path=model_file_path)
+                                file_path=model_file_path,
+                                device_type=device_type)
         return model
