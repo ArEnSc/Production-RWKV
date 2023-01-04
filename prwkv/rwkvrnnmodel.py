@@ -200,15 +200,13 @@ class RWKV_RNN_Model():
         if repetition_penalty > 0 and len(self.repetition_set) > 0:
             # get input ids that we care about the tokens indicies 0 = eos 1 = pad this maps 1-1 no offsets
             s = list(self.repetition_set)
-            rep_logits = logits.detach().clone()
             input_ids = torch.tensor(s)
-            # get those values 
-            score = torch.gather(rep_logits, 0,input_ids)
+            # get those values using the indicies
+            score = torch.gather(logits, 0,input_ids)
             # if score < 0 then repetition penalty has to be multiplied to reduce the previous token probability else divide
             score = torch.where(score < 0, score * repetition_penalty, score / repetition_penalty)
             # apply the values to logits
-            logits.scatter_(0, input_ids, score)
-
+            logits.scatter_(0, input_ids, score) # save to logits using ind and apply the scores there
 
         if temperature == 0:
             # greedy
