@@ -209,8 +209,8 @@ class RWKV_RNN_Model():
         # print(indices.shape)
 
         token_id = torch.multinomial(input=probabilities,num_samples=1)
-
-        return token_id
+        
+        return token_id[0]
     
     def generate(self,
                 input_ids:List[int],
