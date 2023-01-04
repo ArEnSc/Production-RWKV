@@ -255,7 +255,7 @@ class RWKV_RNN_Model():
                     if i == len(context)-1: # last token
                         # get next token from context
                         out_logits, new_state = self.model.forward(next_token, state)
-                        logits = out_logits
+                        logits = out_logits # use the logits from this context!
                        
                     if streaming_callback != None:
                         streaming_callback(next_token[0])
