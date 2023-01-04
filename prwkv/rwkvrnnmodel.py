@@ -62,6 +62,9 @@ class RWKV_RNN_Model():
         # when on generate when generation is complete, it will update the context state again or not do that.
         self.should_update = False 
         # store meta for reference
+
+        # Information on current context 
+        self.current_context = None
         self.meta = None
     def half(self,mode="fp16"):
         if self.args.RUN_DEVICE == "cpu":
@@ -217,7 +220,6 @@ class RWKV_RNN_Model():
             next_token = None
            
             if len(context) > 0:
-               
                 for i in range(len(context)):
                     next_token = context[i:i+1]
                     
@@ -244,7 +246,7 @@ class RWKV_RNN_Model():
                 
                 next_token = token_id
 
-            # Generate using the prior context warm up
+
             else:
                 next_token = self._warp_logits(logits=self.init_logits,
                                                 temperature=temperature,
@@ -276,11 +278,11 @@ class RWKV_RNN_Model():
                     break
 
                 next_token = token_id
-            # after each generation keep the previous context state 
+
+            # after each generation keep the previous context state?
             if self.should_update:
                 self.init_logits = logits.detach().copy()
-                self.init_state =  state.detach().copy()
-                
+                self.init_state = state.detach().copy()
             
             return context
 
