@@ -288,6 +288,7 @@ class RWKV_RNN_Model():
 
             # Start generating
             for _ in range(max_length):
+
                 logits, new_state = self.model.forward(next_token, state)
 
                 state = new_state
@@ -300,7 +301,7 @@ class RWKV_RNN_Model():
                                     bad_words_ids=bad_words_ids,
                                     force_words_ids=force_words_ids) # 1 by 1
                 
-                context.append(token_id) 
+                context.append(token_id.item()) # array of Int 
                 
                 if streaming_callback != None:
                     streaming_callback(token_id)
