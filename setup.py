@@ -12,7 +12,7 @@ setup(
     install_requires=['tokenizers',
                       'numpy',
                       'torch',
-                      'wget'                  
+                      'wget'               
                       ],
     include_package_data = True,
     classifiers=[
