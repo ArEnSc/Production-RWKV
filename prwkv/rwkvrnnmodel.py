@@ -179,7 +179,7 @@ class RWKV_RNN_Model():
             # greedy
             token_id = torch.argmax(logits)
             return token_id
-
+        
         warped_logits = logits / temperature 
 
         # try different samplers here
@@ -209,17 +209,28 @@ class RWKV_RNN_Model():
                  stop_on_eos=False,
                  repetition_penalty=2.5)->Union[List[int],None]:
 
+            # Behavior 
+            # if the context is warmed up and you have no inputs, it will start generating from your warmed up context. [using:] (prior state and prior logits)
+            # if the context is warmed up and you have inputs, it will start generating from your first item in the context [using:] (prior state) [discards:] prior logits 
+            # if the context is not warmed up and you have inputs, it will start generating from your first item.
+            # if the context is not warmed up and you have no inputs, it will assert and crash right away.
+            # Behavior with should update 
+            # 
             context = input_ids
-        
-            # update state and ignore logits and continue generating from the last set of logits
-            # compute the first token using the intial context
+          
             state = None
-            if self.init_state != None:
-                state = self.init_state.detach().clone()
             logits = None
             next_token = None
-           
+
+            # Use warmed context
+            if self.init_state != None:
+                # use to continue to build the context
+                state = self.init_state.detach().clone()
+                # use encase there is an empty input ids
+                logits = self.init_logits.detach().clone()
+            
             if len(context) > 0:
+                # build of warm context + input_ids 
                 for i in range(len(context)):
                     next_token = context[i:i+1]
                     
@@ -246,16 +257,19 @@ class RWKV_RNN_Model():
                 
                 next_token = token_id
 
-
-            else:
-                next_token = self._warp_logits(logits=self.init_logits,
+            elif len(input_ids) == 0 and self.init_logits != None:
+                # input was empty so build off warmed context
+                next_token = self._warp_logits(logits=logits,
                                                 temperature=temperature,
                                                 top_k=top_k,
                                                 top_p=top_p,
                                                 repetition_penalty=repetition_penalty,
                                                 bad_words_ids=bad_words_ids,
                                                 force_words_ids=force_words_ids)
+            else:
+                assert False, "You need an input into the model. warmup the context or add tokenize text and provide input id's to start"
 
+            # Start generating
             for _ in range(max_length):
                 logits, new_state = self.model.forward(next_token, state)
 
