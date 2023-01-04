@@ -17,6 +17,20 @@ torch.backends.cudnn.benchmark = True
 torch.backends.cudnn.allow_tf32 = True
 torch.backends.cuda.matmul.allow_tf32 = True
 
+class InputsNeeded(Exception):
+    "Inputs needed for Generation"
+    pass
+class HalfNotSupported(Exception):
+    "Half Not Supported for CPU"
+    pass
+class FilePathError(Exception):
+    "Must include save path."
+    pass
+
+class IncompatibleCompatibleModel(Exception):
+    "State was created on a specific model you can ignore this exception if you want by using the ignore flag."
+    pass
+
 def bar_progress(current, total, width=80):
     progress_message = "Downloading: %d%% [%d / %d] bytes" % (current / total * 100, current, total)
     # Don't use print() as it will print in new line every time.
@@ -66,9 +80,10 @@ class RWKV_RNN_Model():
         # Information on current context 
         self.current_context = []
         self.meta = None
+
     def half(self,mode="fp16"):
         if self.args.RUN_DEVICE == "cpu":
-            assert False, "Not Supported... only supported on GPU."
+            raise HalfNotSupported
         self.args.FLOAT_MODE = mode
 
     def cuda(self):
@@ -119,12 +134,13 @@ class RWKV_RNN_Model():
             data = {'state': state, 'logits': logits}
             torch.save((data, meta), f'{save_path_and_name}.pt')
         else:
-            assert False, "Must Include Save Path"
+            raise FilePathError
             
     def load_context(self,load_path:Path,ignore_model_check=False):
         loaded_tensors, loaded_metas = torch.load(f'{load_path}.pt')
         if ignore_model_check == False:
-            assert self.file_name == loaded_metas["model_name"], "Must be compatible model." 
+            if self.file_name != loaded_metas["model_name"]:
+                raise IncompatibleCompatibleModel
 
         self.init_state = loaded_tensors["state"]
         self.init_logits = loaded_tensors["logits"]
@@ -267,7 +283,7 @@ class RWKV_RNN_Model():
                                                 bad_words_ids=bad_words_ids,
                                                 force_words_ids=force_words_ids)
             else:
-                assert False, "You need an input into the model. warmup the context or add tokenize text and provide input id's to start"
+                raise InputsNeeded
 
             # Start generating
             for _ in range(max_length):

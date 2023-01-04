@@ -1,5 +1,10 @@
 from tokenizers import Tokenizer
 from pathlib import Path
+
+class PathForTokenizerInvalid(Exception):
+    "Need Path for Tokenizer."
+    pass
+
 class RWKVTokenizer():
     
     @staticmethod
@@ -14,4 +19,4 @@ class RWKVTokenizer():
         if tokenizer_file_path != None:
             return Tokenizer.from_file(tokenizer_file_path)
         else:
-            assert False, "Need Path for Tokenizer."
+            raise PathForTokenizerInvalid
