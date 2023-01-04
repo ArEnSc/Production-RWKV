@@ -28,6 +28,7 @@ class RWKV_RNN_Model():
                 number_of_layers:int,
                 embedding_dim:int,
                 file_path:Path,
+                file_name:str,
                 eos_token_id:int = 0,
                 padd_token_id:int = 1,
                 device_type:str="cpu", # cpu or cuda
@@ -38,8 +39,7 @@ class RWKV_RNN_Model():
         self.embedding_dim  = embedding_dim
         self.eos_token_id = eos_token_id
         self.padd_token_id = padd_token_id
-
-
+        self.file_name = file_name # used to save meta data
         self.args = types.SimpleNamespace()
         self.args.RUN_DEVICE = device_type
         self.args.MODEL_NAME = file_path
@@ -59,19 +59,14 @@ class RWKV_RNN_Model():
         self.init_state = None
         self.init_logits = None
         self.warmup_context = None
-
+        # when on generate when generation is complete, it will update the context state again or not do that.
         self.should_update = False 
-
+        # store meta for reference
+        self.meta = None
     def half(self,mode="fp16"):
-        import platform
-        if platform.system() == "Darwin":
-            assert False, "Not Supported"
-        elif platform.system() == "Windows":
-            self.args.FLOAT_MODE = mode
-            self.model = RWKV_RNN(self.args)
-        else:
-            self.args.FLOAT_MODE = mode
-            self.model = RWKV_RNN(self.args)
+        if self.args.RUN_DEVICE == "cpu":
+            assert False, "Not Supported... only supported on GPU."
+        self.args.FLOAT_MODE = mode
 
     def cuda(self):
         self.args.RUN_DEVICE = "cuda"
@@ -80,13 +75,15 @@ class RWKV_RNN_Model():
 
     def cpu(self):
         self.args.RUN_DEVICE = "cpu"
+        self.args.FLOAT_MODE = "fp32"
         os.environ["RWKV_RUN_DEVICE"] = self.args.RUN_DEVICE
         self.model = RWKV_RNN(self.args)
 
     def clear_memory(self):
         self.init_state = None
         self.init_logits = None 
-        
+    
+    # will clear the context implicitly
     def warmup_with_context(self,context:List[int]):
         init_state = None 
         self.warmup_context = context
@@ -110,18 +107,28 @@ class RWKV_RNN_Model():
             logits = self.init_logits.detach().clone()
 
             # Create a dictionary with the meta data
+            
             meta = {
+                'model_name':self.file_name,
                 'context_decoded':context_decoded
             }
 
             data = {'state': state, 'logits': logits}
             torch.save((data, meta), f'{save_path_and_name}.pt')
-
-    def load_context(self,load_path:Path):
+        else:
+            assert False, "Must Include Save Path"
+            
+    def load_context(self,load_path:Path,ignore_model_check=False):
         loaded_tensors, loaded_metas = torch.load(f'{load_path}.pt')
+        if ignore_model_check == False:
+            assert self.file_name == loaded_metas["model_name"], "Must be compatible model." 
+
         self.init_state = loaded_tensors["state"]
         self.init_logits = loaded_tensors["logits"]
-        return loaded_metas["context_decoded"]
+
+        self.meta = loaded_metas 
+
+        return loaded_metas["context_decoded"],loaded_metas["model_name"]
         
     def update_state_after_generation(self,flag:bool):
         self.should_update = flag
@@ -387,5 +394,6 @@ class RWKVRNN4NeoForCausalLM():
         model = RWKV_RNN_Model(context_length=context_length,
                                 number_of_layers=number_of_layers,
                                 embedding_dim=embedding_dimension,
-                                file_path=model_file_path)
+                                file_path=model_file_path,
+                                file_name=file)
         return model

@@ -11,7 +11,8 @@ setup(
     packages=["prwkv"],
     install_requires=['tokenizers',
                       'numpy',
-                      'torch'                  
+                      'torch',
+                      'wget'                  
                       ],
     include_package_data = True,
     classifiers=[
