@@ -26,6 +26,9 @@ class HalfNotSupported(Exception):
 class FilePathError(Exception):
     "Must include save path."
     pass
+class MinLenIsGreaterThanMax(Exception):
+    "Min Length should be smaller than the Max"
+    pass
 
 class IncompatibleCompatibleModel(Exception):
     "State was created on a specific model you can ignore this exception if you want by using the ignore flag."
@@ -80,6 +83,9 @@ class RWKV_RNN_Model():
         # Information on current context 
         self.current_context = []
         self.meta = None
+
+        # repetition penalty
+        self.repetition_set = set()
 
     def half(self,mode="fp16"):
         if self.args.RUN_DEVICE == "cpu":
@@ -191,6 +197,19 @@ class RWKV_RNN_Model():
         Returns:
             int: token id
         """
+        if repetition_penalty > 0 and len(self.repetition_set) > 0:
+            # get input ids that we care about the tokens indicies 0 = eos 1 = pad this maps 1-1 no offsets
+            s = list(self.repetition_set)
+            rep_logits = logits.detach().clone()
+            input_ids = torch.tensor(s)
+            # get those values 
+            score = torch.gather(rep_logits, 0,input_ids)
+            # if score < 0 then repetition penalty has to be multiplied to reduce the previous token probability else divide
+            score = torch.where(score < 0, score * repetition_penalty, score / repetition_penalty)
+            # apply the values to logits
+            logits.scatter_(0, input_ids, score)
+
+
         if temperature == 0:
             # greedy
             token_id = torch.argmax(logits)
@@ -202,7 +221,6 @@ class RWKV_RNN_Model():
         warped_logits = RWKV_RNN_Model.top_k_top_p_filtering(logits=logits,
                                                             top_k=top_k,
                                                             top_p=top_p)
-
         probabilities = F.softmax(warped_logits, dim=-1)
         # a = probabilities > 0.0
         # indices = a.nonzero()
@@ -217,7 +235,6 @@ class RWKV_RNN_Model():
                 streaming_callback:Callable[[int], None]=None, # streams single word               
                  bad_words_ids=[],
                  force_words_ids=[],
-                 min_length=0,
                  max_length=128,
                  temperature=.85,
                  top_p=.9,
@@ -232,11 +249,13 @@ class RWKV_RNN_Model():
             # if the context is not warmed up and you have no inputs, it will assert and crash right away.
             # Behavior with should update 
             #  self.model.forward takes in List[tensor]
+
             context = input_ids
           
             state = None
             logits = None
             next_token = None
+            
 
             # Use warmed context
             if self.init_state != None:
@@ -262,7 +281,7 @@ class RWKV_RNN_Model():
 
                     state = new_state 
                 # compute the next token given the last token from the context
-               
+
                 token_id = self._warp_logits(logits=logits,
                                         temperature=temperature,
                                         top_k=top_k,
@@ -286,7 +305,6 @@ class RWKV_RNN_Model():
             else:
                 raise InputsNeeded
 
-            # Start generating
             for _ in range(max_length):
 
                 logits, new_state = self.model.forward(next_token, state)
@@ -299,9 +317,12 @@ class RWKV_RNN_Model():
                                     top_p=top_p,
                                     repetition_penalty=repetition_penalty,
                                     bad_words_ids=bad_words_ids,
-                                    force_words_ids=force_words_ids) # 1 by 1
-                
-                context.append(token_id.item()) # array of Int 
+                                    force_words_ids=force_words_ids) # 1 by 1 tensor
+
+                if repetition_penalty > 0: 
+                    self.repetition_set.add(token_id.item()) # add it as a int so we can use as an index
+
+                context.append(token_id.item()) # array of Ints
                 
                 if streaming_callback != None:
                     streaming_callback(token_id)
@@ -320,6 +341,9 @@ class RWKV_RNN_Model():
 
             if self.warmup_context != None:
                 return self.warmup_context + context
+
+            if repetition_penalty > 0:
+                self.repetition_set.clear()
 
             return context
 
