@@ -184,7 +184,7 @@ class RWKV_RNN_Model():
                         top_k:float,
                         repetition_penalty:float,
                         bad_words_ids:List[int],
-                        force_words_ids:List[int])->List[int]:
+                        force_words_ids:List[int])->torch.tensor:
         """
         Args:
             logits (_type_): logits vector
@@ -231,7 +231,7 @@ class RWKV_RNN_Model():
             # if the context is not warmed up and you have inputs, it will start generating from your first item.
             # if the context is not warmed up and you have no inputs, it will assert and crash right away.
             # Behavior with should update 
-            # 
+            #  self.model.forward takes in List[tensor]
             context = input_ids
           
             state = None
@@ -270,18 +270,19 @@ class RWKV_RNN_Model():
                                         repetition_penalty=repetition_penalty,
                                         bad_words_ids=bad_words_ids,
                                         force_words_ids=force_words_ids)
-                
-                next_token = token_id
+               
+                next_token = [token_id]
 
-            elif len(input_ids) == 0 and self.init_logits != None:
+            elif len(input_ids) == 0 and logits != None:
                 # input was empty so build off warmed context
-                next_token = self._warp_logits(logits=logits,
+                token_id = self._warp_logits(logits=logits,
                                                 temperature=temperature,
                                                 top_k=top_k,
                                                 top_p=top_p,
                                                 repetition_penalty=repetition_penalty,
                                                 bad_words_ids=bad_words_ids,
                                                 force_words_ids=force_words_ids)
+                next_token = [token_id]
             else:
                 raise InputsNeeded
 
@@ -299,15 +300,15 @@ class RWKV_RNN_Model():
                                     bad_words_ids=bad_words_ids,
                                     force_words_ids=force_words_ids) # 1 by 1
                 
-                context.append(token_id[0]) 
+                context.append(token_id) 
                 
                 if streaming_callback != None:
-                    streaming_callback(token_id[0])
+                    streaming_callback(token_id)
 
                 if token_id == self.eos_token_id and stop_on_eos:
                     break
 
-                next_token = token_id
+                next_token = [token_id]
 
             # after each generation keep the previous context state?
             if self.should_update:
@@ -315,6 +316,10 @@ class RWKV_RNN_Model():
                 self.init_state = state.detach().clone()
                 self.current_context.extend(context)
                 return self.current_context
+
+            if self.warmup_context != None:
+                return self.warmup_context + context
+
             return context
 
 
