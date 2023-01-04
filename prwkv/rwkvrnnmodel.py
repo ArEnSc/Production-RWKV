@@ -64,7 +64,7 @@ class RWKV_RNN_Model():
         # store meta for reference
 
         # Information on current context 
-        self.current_context = None
+        self.current_context = []
         self.meta = None
     def half(self,mode="fp16"):
         if self.args.RUN_DEVICE == "cpu":
@@ -281,9 +281,10 @@ class RWKV_RNN_Model():
 
             # after each generation keep the previous context state?
             if self.should_update:
-                self.init_logits = logits.detach().copy()
-                self.init_state = state.detach().copy()
-            
+                self.init_logits = logits.detach().clone()
+                self.init_state = state.detach().clone()
+                self.current_context.extend(context)
+                return self.current_context
             return context
 
 
