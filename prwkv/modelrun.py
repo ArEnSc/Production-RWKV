@@ -19,7 +19,7 @@ MyFunction = __nop
 
 RWKV_HEAD_QK_DIM = 0
 
-print(f'\nRWKV_HEAD_QK_DIM {RWKV_HEAD_QK_DIM}\n')
+#print(f'\nRWKV_HEAD_QK_DIM {RWKV_HEAD_QK_DIM}\n')
 
 DEBUG_TIME = False   # True False - show trained time-coeffs
 
@@ -28,7 +28,7 @@ RWKV_RESCALE_LAYER = 6 # set x=x/2 every X layer
 ############################################################################################################
 
 class RWKV_RNN(nn.Module):
-    def __init__(self, args,should_log:bool=False):
+    def __init__(self, args):
         super().__init__()
 
         self.args = args
@@ -55,8 +55,8 @@ class RWKV_RNN(nn.Module):
                 if '.time_' in x:
                     w[x] = w[x].squeeze()
                     if DEBUG_TIME:
-                        if should_log:
-                            print(x, w[x].numpy())
+                        pass
+                        #print(x, w[x].numpy())
                 if '.time_decay' in x:
                     w[x] = w[x].float()
                     w[x] = -torch.exp(w[x])
@@ -76,15 +76,13 @@ class RWKV_RNN(nn.Module):
 
                 if ('blocks.' not in x) or ('blocks.0.' in x):
                     if print_need_newline:
-                        if should_log:
-                            print('\n', end = '')
+                        #print('\n', end = '')
                         print_need_newline = False
-                    if should_log:
-                        print(x.ljust(40), str(w[x].dtype).replace('torch.', '').ljust(10), w[x].device)
+                        #print(x.ljust(40), str(w[x].dtype).replace('torch.', '').ljust(10), w[x].device)
                 else:
                     print_need_newline = True
-                    if should_log:
-                        print('.', end = '', flush = True)
+                
+                    #print('.', end = '', flush = True)
 
         # store weights in self.w
         keys = list(w.keys())

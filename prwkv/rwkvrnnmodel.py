@@ -9,7 +9,7 @@ import types
 import torch
 import json
 import sys
-
+import copy
 from typing import List,Union,Callable
 from .modelrun import RWKV_RNN
 import torch.nn.functional as F
@@ -86,7 +86,7 @@ class RWKV_RNN_Model():
     # will clear the context implicitly
     def warmup_with_context(self,context:List[int]):
         init_state = None 
-        self.warmup_context = context
+        self.warmup_context = copy.deepcopy(context)
         context_length = len(context)
 
         for i in range(context_length):
@@ -194,8 +194,8 @@ class RWKV_RNN_Model():
         return token_id
     
     def generate(self,
-                 streaming_callback:Callable[[int], None], # streams single word
-                 inputs_id:List[int]=[],
+                input_ids:List[int],
+                streaming_callback:Callable[[int], None]=None, # streams single word               
                  bad_words_ids=[],
                  force_words_ids=[],
                  min_length=0,
@@ -206,8 +206,8 @@ class RWKV_RNN_Model():
                  stop_on_eos=False,
                  repetition_penalty=2.5)->Union[List[int],None]:
 
-            context = inputs_id
-
+            context = input_ids
+        
             # update state and ignore logits and continue generating from the last set of logits
             # compute the first token using the intial context
             state = None
@@ -215,10 +215,12 @@ class RWKV_RNN_Model():
                 state = self.init_state.detach().clone()
             logits = None
             next_token = None
-
+           
             if len(context) > 0:
+               
                 for i in range(len(context)):
                     next_token = context[i:i+1]
+                    
                     new_state = self.model.forward(next_token, state,preprocess_only=True)
                  
                     if i == len(context)-1: # last token
@@ -278,13 +280,9 @@ class RWKV_RNN_Model():
             if self.should_update:
                 self.init_logits = logits.detach().copy()
                 self.init_state =  state.detach().copy()
-                self.warmup_context = self.warmup_context + context
-                return self.warmup_context
-            # if not storing previous state and context was warmed up
-            elif self.warmup_context != None:
-                return self.warmup_context + context
-            else: # return the context if didn't have any warmup state
-                return context
+                
+            
+            return context
 
 
 class RWKVRNN4NeoForCausalLM():
