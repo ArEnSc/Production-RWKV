@@ -126,7 +126,7 @@ Provide the performance numbers for the models in various deployment strategies 
 * [ ] Typical Sampling
 * [ ] Tail Free Sampling
 * [ ] Top-p-x sampling method 
-* [ ] Provide Better Documentation
+* [ ] Provide Better Documentation WIP
 
 Train:
 * [ ] Seeker Dialog Model
