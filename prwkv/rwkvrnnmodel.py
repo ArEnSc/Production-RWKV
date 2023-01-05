@@ -88,8 +88,6 @@ class RWKV_RNN_Model():
         self.repetition_set = set()
 
     def half(self,mode="fp16"):
-        if self.args.RUN_DEVICE == "cpu":
-            raise HalfNotSupported
         self.args.FLOAT_MODE = mode
 
     def cuda(self):
