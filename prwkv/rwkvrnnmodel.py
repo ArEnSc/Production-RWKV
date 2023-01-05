@@ -238,7 +238,7 @@ class RWKV_RNN_Model():
                  top_p=.9,
                  top_k=20,
                  stop_on_eos=False,
-                 repetition_penalty=2.5)->Union[List[int],None]:
+                 repetition_penalty=0)->Union[List[int],None]:
 
             # Behavior 
             # if the context is warmed up and you have no inputs, it will start generating from your warmed up context. [using:] (prior state and prior logits)
@@ -254,14 +254,15 @@ class RWKV_RNN_Model():
             logits = None
             next_token = None
             
-
             # Use warmed context
             if self.init_state != None:
                 # use to continue to build the context
                 state = self.init_state.detach().clone()
                 # use encase there is an empty input ids
                 logits = self.init_logits.detach().clone()
-            
+                print("INIT STATE:")
+                print(self.init_state)
+
             if len(context) > 0:
                 # build of warm context + input_ids 
                 for i in range(len(context)):
@@ -342,7 +343,6 @@ class RWKV_RNN_Model():
 
             if repetition_penalty > 0:
                 self.repetition_set.clear()
-
             return context
 
 
@@ -448,7 +448,7 @@ class RWKVRNN4NeoForCausalLM():
             model_file_path = str(Path(cache_folder_path) / Path(file))
         else:
             model_file_path = str(Path(file_path_or_name))
-            
+            file = file_path_or_name
         # configure model
         model = RWKV_RNN_Model(context_length=context_length,
                                 number_of_layers=number_of_layers,
