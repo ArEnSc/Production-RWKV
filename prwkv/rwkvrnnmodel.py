@@ -260,8 +260,6 @@ class RWKV_RNN_Model():
                 state = self.init_state.detach().clone()
                 # use encase there is an empty input ids
                 logits = self.init_logits.detach().clone()
-                print("INIT STATE:")
-                print(self.init_state)
 
             if len(context) > 0:
                 # build of warm context + input_ids 
