@@ -29,17 +29,26 @@ Update: I am working on the HF version.
 ```python
 from prwkv.rwkvtokenizer import RWKVTokenizer
 from prwkv.rwkvrnnmodel import RWKVRNN4NeoForCausalLM
-
 tokenizer = RWKVTokenizer.default()
-model = RWKVRNN4NeoForCausalLM.from_pretrained("/Users/michaelchung/Code/Production-RWKV/RWKV-4-Pile-430M-20220808-8066",n_layer=24,n_embd=1024,ctx_len=1024)
+model = RWKVRNN4NeoForCausalLM.from_pretrained("/Users/michaelchung/Code/Production-RWKV/RWKV-4-Pile-430M-20220808-8066",number_of_layers=24,embedding_dimension=1024,context_length=1024)
 
 context = "\nIn a shocking finding, scientist discovered a herd of dragons living in a remote, previously unexplored valley, in Tibet. Even more surprising to the researchers was the fact that the dragons spoke perfect Chinese."
 context_input_ids = tokenizer.encode(context).ids
+model.warmup_with_context(context=context_input_ids)
+
+import time
 
 def callback(ind):
     token = tokenizer.decode([ind],skip_special_tokens=False)
     print(token,end="")
-ctx = model.generate(inputs_id=context_input_ids,streaming_callback=callback,max_length=128)
+
+# repetition penalty and temperature are senstive and can cause generations to offshoot.
+start = time.time()
+ctx = model.generate(input_ids=[],streaming_callback=callback,max_length=32,repetition_penalty=0.0,temperature=0.8,stop_on_eos=True)
+end = time.time()
+
+print(f"{end-start} seconds \n")
+
 result = tokenizer.decode(ctx,skip_special_tokens=False) # cpu 3 tokens a second
 print(f"\n---Result---:\n{result}")
 
@@ -52,9 +61,8 @@ model = RWKVRNN4NeoForCausalLM.from_pretrained("RWKV-4-430M") # options RWKV-4-1
 ```
 
 # How to install
-
 ```
-pip3 install PRWKV
+pip3 install prwkv
 ```
 
 # Quickly Grokking the RWKV Model
