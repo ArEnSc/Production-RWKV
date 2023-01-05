@@ -1,4 +1,6 @@
-Note still WIP it will have breaking changes stability coming soon!
+# Changes
+0.1.0 
+Provides Stability and State Management Documentation to be provided at a later date.
 # Production-RWKV
 RWKV - Receptance Weighted Key Value 
 
