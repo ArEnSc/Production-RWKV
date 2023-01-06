@@ -286,6 +286,8 @@ class RWKV_RNN_Model():
                                         force_words_ids=force_words_ids)
                
                 next_token = [token_id]
+                
+                context.append(token_id.item())
 
             elif len(input_ids) == 0 and logits != None:
                 # input was empty so build off warmed context
