@@ -1,4 +1,11 @@
 # Changes
+Known Issues:
+Repetition Penalty doesn't work on CUDA, forgot to move the tensors lol.
+
+0.1.5
+Fixed Examples.
+0.1.4
+Bug Fixes can now properly resume the state generation, there was an issue with the array not being copied.
 0.1.2 
 Bug Fixes can now use float 16 on GPU 
 CPU remains at float 32
