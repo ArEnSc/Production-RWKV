@@ -5,7 +5,7 @@ from prwkv.rwkvtokenizer import RWKVTokenizer
 from prwkv.rwkvrnnmodel import RWKVRNN4NeoForCausalLM
 from prwkv.rwkvrnnmodel import InputsNeeded
 from pathlib import Path
-
+import torch
 class GenerateTests(unittest.TestCase):
 
     def setUp(self):
@@ -123,8 +123,7 @@ class GenerateTests(unittest.TestCase):
         self.assertEqual(" researchers",last_token,"check the last token")
         self.assertEqual("The",second_last_token,"check the second last")
         self.assertEqual("\n",third_last_token,"check the third lasst token")
-        
-       
+    
 
         # continue generation with the without stored state
         generation = self.model.generate(input_ids=input_ids,temperature=0,repetition_penalty=0,max_length=3,streaming_callback=self.streaming_callback)
@@ -159,13 +158,38 @@ class GenerateTests(unittest.TestCase):
 
         self.assertEqual(" the",last_token,"check the last token")
         self.assertEqual(" that",second_last_token,"check the second last")
-        self.assertEqual(" found",third_last_token,"check the third lasst token")
+        self.assertEqual(" found",third_last_token,"check the third last token")
 
         generation = self.model.generate(input_ids=input_ids,temperature=0,repetition_penalty=0,max_length=1,streaming_callback=self.streaming_callback)
 
         last_token = self.tokenizer.decode([generation[-1]],skip_special_tokens=False)
         self.assertEqual(" dragons",last_token,"check the last token")
+        # implied that the context is returned :)
 
+    def test_load_cpu(self):
+        self.model.cpu()
+        self.assertEqual(self.model.args.FLOAT_MODE,"fp32","Make sure flag is floating point 32")
+        self.assertEqual(self.model.args.RUN_DEVICE,"cpu"," Using CPU")
+ 
+    def test_context_save_load(self):
+        context = "Hello world this is an example context."
+        input_ids = self.tokenizer.encode(context).ids
+
+        self.model.warmup_with_context(input_ids)
+
+        self.assertAlmostEqual(self.model.warmup_context,self.model.warmup_context,"check that the context is stored.")
+        self.model.save_context(save_path_and_name=Path("./test_save"),context_decoded=context)
+
+        prev_logits = self.model.init_logits.detach().clone()
+        prev_state = self.model.init_state.detach().clone()
+
+        context_string, model_name = self.model.load_context(load_path=Path("./test_save"))
+       
+        self.assertTrue(torch.allclose(prev_logits,self.model.init_logits), "check prior logits")
+        self.assertTrue(torch.allclose(prev_state,self.model.init_state),"check prior state")
+
+        self.assertEqual(context,context_string,"check if the og context matches up.")
+        self.assertEqual(model_name,self.model.file_name,"check model name")
 
 if __name__.__contains__("__main__"):
     unittest.main()
