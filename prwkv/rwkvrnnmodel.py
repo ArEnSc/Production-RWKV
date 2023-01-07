@@ -247,7 +247,7 @@ class RWKV_RNN_Model():
             # Behavior with should update 
             #  self.model.forward takes in List[tensor]
 
-            context = input_ids
+            context = copy.deepcopy(input_ids) # make sure not to modify the input lol
           
             state = None
             logits = None
@@ -287,7 +287,7 @@ class RWKV_RNN_Model():
                                         force_words_ids=force_words_ids)
                
                 next_token = [token_id]
-                
+
                 context.append(token_id.item())
 
             elif len(input_ids) == 0 and logits != None:
@@ -323,7 +323,7 @@ class RWKV_RNN_Model():
                 context.append(token_id.item()) # array of Ints
                 
                 if streaming_callback != None:
-                    streaming_callback(token_id)
+                    streaming_callback(token_id.item()) # return token in a int as sequence so it can be decoded
 
                 if token_id == self.eos_token_id and stop_on_eos:
                     break
@@ -337,11 +337,16 @@ class RWKV_RNN_Model():
                 self.current_context.extend(context)
                 return self.current_context
 
+            if self.should_update == False:
+                pass 
+
             if self.warmup_context != None:
-                return self.warmup_context + context
+                return self.warmup_context + context # returns this
 
             if repetition_penalty > 0:
                 self.repetition_set.clear()
+
+
             return context
 
 
