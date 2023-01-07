@@ -14,6 +14,8 @@ class GenerateTests(unittest.TestCase):
         self.model = RWKVRNN4NeoForCausalLM.from_pretrained("RWKV-4-169M")
         print(f"Model Setup:{self.model.file_name}")
 
+        
+
     def tearDown(self):
         """Method to tear down the test fixture. Run AFTER the test methods."""
         pass
