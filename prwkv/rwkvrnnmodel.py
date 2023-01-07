@@ -198,7 +198,8 @@ class RWKV_RNN_Model():
         if repetition_penalty > 0 and len(self.repetition_set) > 0:
             # get input ids that we care about the tokens indicies 0 = eos 1 = pad this maps 1-1 no offsets
             s = list(self.repetition_set)
-            input_ids = torch.tensor(s)
+            input_ids = torch.tensor(s).to(torch.device(self.args.RUN_DEVICE)) # converts the input_ids to cuda or cpu
+            logits = logits.to(torch.device(self.args.RUN_DEVICE)) # converts the logits to cuda or cpu
             # get those values using the indicies
             score = torch.gather(logits, 0,input_ids)
             # if score < 0 then repetition penalty has to be multiplied to reduce the previous token probability else divide
@@ -246,7 +247,7 @@ class RWKV_RNN_Model():
             # Behavior with should update 
             #  self.model.forward takes in List[tensor]
 
-            context = copy.deepcopy(input_ids) # make sure not to modify the input lol
+            context = input_ids
           
             state = None
             logits = None
@@ -286,7 +287,7 @@ class RWKV_RNN_Model():
                                         force_words_ids=force_words_ids)
                
                 next_token = [token_id]
-
+                
                 context.append(token_id.item())
 
             elif len(input_ids) == 0 and logits != None:
@@ -322,7 +323,7 @@ class RWKV_RNN_Model():
                 context.append(token_id.item()) # array of Ints
                 
                 if streaming_callback != None:
-                    streaming_callback(token_id.item()) # return token in a int as sequence so it can be decoded
+                    streaming_callback(token_id)
 
                 if token_id == self.eos_token_id and stop_on_eos:
                     break
@@ -336,16 +337,11 @@ class RWKV_RNN_Model():
                 self.current_context.extend(context)
                 return self.current_context
 
-            if self.should_update == False:
-                pass 
-
             if self.warmup_context != None:
-                return self.warmup_context + context # returns this
+                return self.warmup_context + context
 
             if repetition_penalty > 0:
                 self.repetition_set.clear()
-
-
             return context
 
 
