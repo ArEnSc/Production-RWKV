@@ -198,7 +198,8 @@ class RWKV_RNN_Model():
         if repetition_penalty > 0 and len(self.repetition_set) > 0:
             # get input ids that we care about the tokens indicies 0 = eos 1 = pad this maps 1-1 no offsets
             s = list(self.repetition_set)
-            input_ids = torch.tensor(s)
+            input_ids = torch.tensor(s).to(torch.device(self.args.RUN_DEVICE)) # converts the input_ids to cuda or cpu
+            logits = logits.to(torch.device(self.args.RUN_DEVICE)) # converts the logits to cuda or cpu
             # get those values using the indicies
             score = torch.gather(logits, 0,input_ids)
             # if score < 0 then repetition penalty has to be multiplied to reduce the previous token probability else divide
