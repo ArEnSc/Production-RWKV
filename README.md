@@ -1,15 +1,15 @@
 # Changes
-0.1.5
-Fixed Examples.
-0.1.4
-Bug Fixes can now properly resume the state generation, there was an issue with the array not being copied.
-0.1.2 
-Bug Fixes can now use float 16 on GPU 
-CPU remains at float 32
-0.1.1
-Reduce the logging noise in the library.
-0.1.0 
-Provides Stability and State Management Documentation to be provided at a later date.
+# 0.1.5 
+* Fixed Examples.
+# 0.1.4
+* Bug Fixes can now properly resume the state generation, there was an issue with the array not being copied.
+# 0.1.2 
+* Bug Fixes can now use float 16 on GPU 
+* CPU remains at float 32
+# 0.1.1
+* Reduce the logging noise in the library.
+# 0.1.0 
+* Provides Stability and State Management Documentation to be provided at a later date.
 # Production-RWKV
 RWKV - Receptance Weighted Key Value 
 
