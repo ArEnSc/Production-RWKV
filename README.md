@@ -1,7 +1,4 @@
 # Changes
-Known Issues:
-Repetition Penalty doesn't work on CUDA, forgot to move the tensors lol.
-
 0.1.5
 Fixed Examples.
 0.1.4
