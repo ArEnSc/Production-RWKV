@@ -43,6 +43,7 @@ class GenerateTests(unittest.TestCase):
         Warm up context and generate two tokens with Empty input_ids. No State Resuming.
         """
         input_ids = []
+        self.model.should_return_full_context(flag=True)
         self.model.warmup_with_context(self.context_ids)
         generation = self.model.generate(input_ids=input_ids,temperature=0,repetition_penalty=0,max_length=0,streaming_callback=self.streaming_callback)
 
@@ -61,6 +62,8 @@ class GenerateTests(unittest.TestCase):
         Warm up context and generate two tokens with Empty input_ids. No State Resuming.
         """
         input_ids = []
+        self.model.should_return_full_context(flag=True)
+
         self.model.warmup_with_context(self.context_ids)
 
         generation = self.model.generate(input_ids=input_ids,temperature=0,repetition_penalty=0,max_length=1,streaming_callback=self.streaming_callback)
@@ -81,6 +84,8 @@ class GenerateTests(unittest.TestCase):
         Warm up context and generate two tokens with Empty input_ids. No State Resuming.
         """
         input_ids = []
+        self.model.should_return_full_context(flag=True)
+
         self.model.warmup_with_context(self.context_ids)
         generation = self.model.generate(input_ids=input_ids,temperature=0,repetition_penalty=0,max_length=2,streaming_callback=self.streaming_callback) # take the second token
 
@@ -197,14 +202,35 @@ class GenerateTests(unittest.TestCase):
         """
         self.model.update_state_after_generation(True)
         self.model.should_return_full_context(True)
-        self.model.warmup_with_context(self.context_ids)
+        # answer to the full context being returned
+        result1 = '\nIn a shocking finding, scientist discovered a herd of dragons living in a remote, previously unexplored valley, in Tibet. Even more surprising to the researchers was the fact that the dragons spoke perfect Chinese.\nThe'
 
+        self.model.warmup_with_context(self.context_ids)
         generation = self.model.generate(input_ids=[],streaming_callback=None,max_length=2,repetition_penalty=0,temperature=0,stop_on_eos=True)
         self.assertEqual(len(generation), self.context_length+2, 'check if the context returned is full context length or just the generated context length.')
-        
+        test1 = self.tokenizer.decode(generation,skip_special_tokens=False)
+        self.assertEqual(test1,result1,"Should have the following output with the whole context and the generated words")
+
         self.model.should_return_full_context(False)
         generation = self.model.generate(input_ids=[],streaming_callback=None,max_length=2,repetition_penalty=0,temperature=0,stop_on_eos=True)
         self.assertEqual(len(generation), 2, 'check if the context returned is full context length or just the generated context length.')
+        test2 = self.tokenizer.decode(generation,skip_special_tokens=False)
+        self.assertEqual(test2,' researchers found',"should just generate length 2 and the remaining string")
+       
 
+        self.model.should_return_full_context(False)
+        generation = self.model.generate(input_ids=[],streaming_callback=None,max_length=2,repetition_penalty=0,temperature=0,stop_on_eos=True)
+        self.assertEqual(len(generation), 2, 'check if the context returned is full context length or just the generated context length.')
+        test3 = self.tokenizer.decode(generation,skip_special_tokens=False)
+        self.assertEqual(test3,' that the')
+
+        # keeps that context state as a buffer but doesn't use it to generate 
+        self.model.should_return_full_context(True)
+        generation = self.model.generate(input_ids=[],streaming_callback=None,max_length=1,repetition_penalty=0,temperature=0,stop_on_eos=True)
+        test4 = self.tokenizer.decode(generation,skip_special_tokens=False)
+
+        self.final_result = self.assertEqual(test4,'\nIn a shocking finding, scientist discovered a herd of dragons living in a remote, previously unexplored valley, in Tibet. Even more surprising to the researchers was the fact that the dragons spoke perfect Chinese.\nThe researchers found that the dragons', "should return the full context again with the extra generated stuff prior")
+
+        
 if __name__.__contains__("__main__"):
     unittest.main()

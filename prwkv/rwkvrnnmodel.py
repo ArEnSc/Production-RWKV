@@ -113,10 +113,9 @@ class RWKV_RNN_Model():
     # will clear the context implicitly
     def warmup_with_context(self,context:List[int]):
         init_state = None 
-        self.warmup_context = copy.deepcopy(context)
         context_length = len(context)
-
-        self.current_context.extend(context)
+        # Will need to make a copy
+        self.current_context.extend(copy.deepcopy(context))
 
         for i in range(context_length):
             x = context[i:i+1]
@@ -337,23 +336,22 @@ class RWKV_RNN_Model():
 
                 next_token = [token_id]
 
+            if repetition_penalty > 0:
+                self.repetition_set.clear()
+
             # after each generation keep the previous context state?
             if self.should_update:
                 self.init_logits = logits.detach().clone()
                 self.init_state = state.detach().clone()
-                self.current_context.extend(context)
-                if self.return_full_context == True: # if we should return the full context or the just generated context
-                    return self.current_context # returns full context log
-                return context # returns generated context
+            
+            # keep a context history
+            self.current_context.extend(copy.deepcopy(context))
 
-            if self.warmup_context != None:
-                return self.warmup_context + context # returns this
+            if self.return_full_context == True: # if we should return the full context or the just generated context
+                return self.current_context # returns full context log
+            
+            return copy.deepcopy(context) # returns generated context
 
-            if repetition_penalty > 0:
-                self.repetition_set.clear()
-
-
-            return context
 
 
 class RWKVRNN4NeoForCausalLM():
