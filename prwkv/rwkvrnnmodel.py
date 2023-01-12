@@ -77,7 +77,9 @@ class RWKV_RNN_Model():
         self.init_logits = None
         self.warmup_context = None
         # when on generate when generation is complete, it will update the context state again or not do that.
-        self.should_update = False 
+        self.should_update = False
+        # should we return the full context in update mode
+        self.return_full_context = False
         # store meta for reference
 
         # Information on current context 
@@ -103,13 +105,18 @@ class RWKV_RNN_Model():
 
     def clear_memory(self):
         self.init_state = None
-        self.init_logits = None 
+        self.init_logits = None
+
+    def should_return_full_context(self, flag:bool=True):
+        self.return_full_context = flag
     
     # will clear the context implicitly
     def warmup_with_context(self,context:List[int]):
         init_state = None 
         self.warmup_context = copy.deepcopy(context)
         context_length = len(context)
+
+        self.current_context.extend(context)
 
         for i in range(context_length):
             x = context[i:i+1]
@@ -335,10 +342,9 @@ class RWKV_RNN_Model():
                 self.init_logits = logits.detach().clone()
                 self.init_state = state.detach().clone()
                 self.current_context.extend(context)
-                return self.current_context
-
-            if self.should_update == False:
-                pass 
+                if self.return_full_context == True: # if we should return the full context or the just generated context
+                    return self.current_context # returns full context log
+                return context # returns generated context
 
             if self.warmup_context != None:
                 return self.warmup_context + context # returns this

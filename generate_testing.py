@@ -191,5 +191,20 @@ class GenerateTests(unittest.TestCase):
         self.assertEqual(context,context_string,"check if the og context matches up.")
         self.assertEqual(model_name,self.model.file_name,"check model name")
 
+    def test_fullcontext(self):
+        """
+        This test checks if the full context will be returned or not.
+        """
+        self.model.update_state_after_generation(True)
+        self.model.should_return_full_context(True)
+        self.model.warmup_with_context(self.context_ids)
+
+        generation = self.model.generate(input_ids=[],streaming_callback=None,max_length=2,repetition_penalty=0,temperature=0,stop_on_eos=True)
+        self.assertEqual(len(generation), self.context_length+2, 'check if the context returned is full context length or just the generated context length.')
+        
+        self.model.should_return_full_context(False)
+        generation = self.model.generate(input_ids=[],streaming_callback=None,max_length=2,repetition_penalty=0,temperature=0,stop_on_eos=True)
+        self.assertEqual(len(generation), 2, 'check if the context returned is full context length or just the generated context length.')
+
 if __name__.__contains__("__main__"):
     unittest.main()
