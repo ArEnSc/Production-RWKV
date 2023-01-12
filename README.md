@@ -1,4 +1,6 @@
 # Changes
+# 0.1.6
+* added option to not include original context in generation
 # 0.1.5 
 * Fixed Examples.
 # 0.1.4
