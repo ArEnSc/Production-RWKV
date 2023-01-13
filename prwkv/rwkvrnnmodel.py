@@ -282,19 +282,21 @@ class RWKV_RNN_Model():
                         streaming_callback(next_token[0])
 
                     state = new_state 
-                # compute the next token given the last token from the context
-                if max_length > 0:
-                    token_id = self._warp_logits(logits=logits,
-                                            temperature=temperature,
-                                            top_k=top_k,
-                                            top_p=top_p,
-                                            repetition_penalty=repetition_penalty,
-                                            bad_words_ids=bad_words_ids,
-                                            force_words_ids=force_words_ids)
-                
-                    next_token = [token_id]
 
-                    context.append(token_id.item())
+                # TODO MAYBE don't need this code here    
+                # compute the next token given the last token from the context
+                # if max_length > 0:
+                #     token_id = self._warp_logits(logits=logits,
+                #                             temperature=temperature,
+                #                             top_k=top_k,
+                #                             top_p=top_p,
+                #                             repetition_penalty=repetition_penalty,
+                #                             bad_words_ids=bad_words_ids,
+                #                             force_words_ids=force_words_ids)
+                
+                #     next_token = [token_id]
+
+                #     context.append(token_id.item())
 
             elif len(input_ids) == 0 and logits != None:
                 # input was empty so build off warmed context
