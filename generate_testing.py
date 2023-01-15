@@ -276,7 +276,12 @@ class GenerateTests(unittest.TestCase):
         self.assertEqual(test1,self.context+"\n","Should just return the full context +\n nothing should be generated time step 1 and didn't do a warm up")
 
 
-    # def test_context_start_2_input_id_with_context_no_update(self):
-    #     pass 
+    def test_context_start_2_input_id_with_context_no_update(self):
+        # no update should just generate \n on greedy for that specific prompt
+        self.model.update_state_after_generation(False)
+        self.model.should_return_full_context(True)
+        # it's generating an extra token? 
+        generation = self.model.generate(input_ids=self.context_ids,streaming_callback=self.streaming_callback,max_length=1,repetition_penalty=0,temperature=0,stop_on_eos=True)        
+        test1 = self.tokenizer.decode(generation,skip_special_tokens=False)
 if __name__.__contains__("__main__"):
     unittest.main()
