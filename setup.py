@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='PRWKV',
-    version='0.1.8',    
+    version='0.1.9',    
     description='This project aims to make RWKV Accessible to everyone using a Hugging Face like OOP interface. Research done by BlinkDL.',
     url='https://github.com/ArEnSc/Production-RWKV',
     author='Michael Chung',
