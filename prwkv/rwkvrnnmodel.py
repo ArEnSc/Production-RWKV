@@ -49,6 +49,7 @@ class RWKV_RNN_Model():
                 eos_token_id:int = 0,
                 padd_token_id:int = 1,
                 device_type:str="cpu", # cpu or cuda
+                float_mode:str="bf16", # fp32 (good for cpu) // fp16 (might overflow) // bf16 (less accurate)
                 ):
         
         self.context_length = context_length
@@ -61,7 +62,7 @@ class RWKV_RNN_Model():
         self.args.RUN_DEVICE = device_type
         self.args.MODEL_NAME = file_path
 
-        self.args.FLOAT_MODE = "fp32" # fp32 (good for cpu) // fp16 (might overflow) // bf16 (less accurate)
+        self.args.FLOAT_MODE = float_mode
         self.args.n_layer = self.number_of_layers
         self.args.n_embd = self.embedding_dim
         self.args.vocab_size = 50277
