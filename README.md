@@ -1,4 +1,6 @@
 # Changes
+# 0.1.9
+* Fixed issues with floating point half and cuda half modes. 7B runs on 14 GB 
 # 0.1.6
 * added option to not include original context in generation
 # 0.1.5 
