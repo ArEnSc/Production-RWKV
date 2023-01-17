@@ -146,4 +146,7 @@ Train:
 * [ ] Palm Instruction Tuned Model
 * [ ] GPT Instruction Tuned Model
 
-
+* AdamW takes 8 bytes per parameter ~~
+* each model is roughly 
+14G VRAM for a 7B model at fp16
+28G VRAM for a 7B model at fp32
