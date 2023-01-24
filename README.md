@@ -126,6 +126,21 @@ Performance 3090 (Non Cuda Might need to revisit these metrics):
 | Warm Up Time | 0.7686s | 0.9178s |  0.8562s |  1.0058s | 1.0309s | x |
 | Load Time |  1.9397s | 3.0567s |  6.3156s |  14.0923s | 26.1861s | x | 
 
+| Model | Threads | Load Time | Initialize Time | Run Time (25 tokens) | VRAM/RAM |
+|-------|---------|----------|----------------|----------------------|----------|
+| RWKV-4-Pile-14B-20221128-3061 | 3090 & 3080Ti | 232.76s | 3.66s | 3.66s | 29199MB |
+| RWKV-4-Pile-14B-20221128-3061 | 38 | 218.46s | 40.33s | 60.73s | 54341MB |
+| RWKV-4-Pile-1B5-20220929-ctx4096 | 3090 & 3080Ti | 32.42s | 1.36s | 2.08s | 2936MB |
+| RWKV-4-Pile-1B5-20220929-ctx4096 | 38 | 3.8s | 3.55s | 5.2s | 5302MB |
+| RWKV-4a-Pile-170M-20221209-7955 | 3090 & 3080Ti | 3.92s | 0.58s | 0.92s | 286MB |
+| RWKV-4a-Pile-170M-20221209-7955 | 38 | 0.81s | 0.59s | 1.12s | 604MB |
+| RWKV-4-Pile-430M-20220808-8066 | 3090 & 3080Ti | 9.02s | 1.22s | 1.86s | 748MB |
+| RWKV-4-Pile-430M-20220808-8066 | 38 | 1.42s | 1.53s | 2.56s | 1507MB |
+| RWKV-4-Pile-7B-20221123-ctx2048 | 3090 & 3080Ti | 154.28s | 1.79s | 2.97s | 13620MB |
+| RWKV-4-Pile-7B-20221123-ctx2048 | 38 | 37.79s | 30.65s | 37.27s | 29667MB |
+| RWKV-4-Pile-3B-20221110-ctx4096 | 3090 & 3080Ti | 61.79s | 1.83s | 2.85s | 5700MB |
+| RWKV-4-Pile-3B-20221110-ctx4096 | 38 | 7.39s | 11.55s | 15.1s | 11797MB |
+
 # Road Map
 * [x] Provide Pip Package
 * [ ] Zero Shot Benchmark Test
