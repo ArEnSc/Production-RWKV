@@ -49,7 +49,7 @@ class RWKV_RNN_Model():
                 eos_token_id:int = 0,
                 padd_token_id:int = 1,
                 device_type:str="cpu", # cpu or cuda
-                float_mode:str="fp16", # fp32 (good for cpu) // fp16 (might overflow) // bf16 (less accurate)
+                float_mode:str="fp32", # fp32 (good for cpu) // fp16 (might overflow) // bf16 (less accurate)
                 ):
         
         self.context_length = context_length
@@ -92,7 +92,14 @@ class RWKV_RNN_Model():
 
     def half(self,mode="fp16"):
         self.args.FLOAT_MODE = mode
-        self.model = RWKV_RNN(self.args)
+        # if using cpu assert because LN not supported
+        if torch.device('cpu') == torch.device('cuda') or torch.cuda.is_available():
+            #print('Current device is GPU')
+            self.model = RWKV_RNN(self.args)
+        else:
+            print('The Current device is CPU')
+            assert(False, "CPU does not support FP 16")
+
         
     def full(self,mode="fp32"):
         self.args.FLOAT_MODE = mode
