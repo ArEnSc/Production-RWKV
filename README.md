@@ -1,3 +1,6 @@
+# Use RWKV HF Edition
+https://huggingface.co/RWKV
+Project Archived
 # Changes
 # 0.2.0
 * Fixed issue with crashing on fp16 on cpu.
